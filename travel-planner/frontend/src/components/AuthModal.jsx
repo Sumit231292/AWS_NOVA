@@ -1,30 +1,20 @@
 import { useState } from 'react'
-import { X, Mail, User, Lock, Compass, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { X, Mail, User, Lock, Compass, ArrowRight, Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
-/**
- * AUTH SETUP GUIDE
- * ─────────────────────────────────────────────────────────────────
- * This modal supports three auth modes:
- *
- * MODE 1 — LOCAL (default, works right now, no setup needed)
- *   Credentials stored in localStorage. Fine for demo/hackathon.
- *
- * MODE 2 — AWS COGNITO (recommended for production)
- *   1. Create a Cognito User Pool in AWS Console
- *   2. Enable Google / GitHub (via Cognito Hosted UI + OAuth)
- *   3. npm install aws-amplify
- *   4. Uncomment the Amplify block in AppContext.jsx
- *   5. Set VITE_COGNITO_USER_POOL_ID and VITE_COGNITO_CLIENT_ID in .env
- *
- * MODE 3 — SUPABASE (easiest social auth)
- *   1. Create project at supabase.com
- *   2. npm install @supabase/supabase-js
- *   3. Enable Google/GitHub in Supabase Auth settings
- *   4. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env
- *   Then replace signIn() calls with supabase.auth.signInWithOAuth({ provider })
- * ─────────────────────────────────────────────────────────────────
- */
+/* ─── Friendly Cognito error messages ──────────────────────────────────────── */
+const friendlyError = (err) => {
+  const name = err?.name || ''
+  if (name === 'UserNotConfirmedException')  return 'Please verify your email first'
+  if (name === 'NotAuthorizedException')     return 'Incorrect email or password'
+  if (name === 'UserNotFoundException')      return 'No account found with this email'
+  if (name === 'UsernameExistsException')    return 'An account already exists with this email'
+  if (name === 'CodeMismatchException')      return 'Invalid verification code — please try again'
+  if (name === 'InvalidPasswordException')   return 'Password must have 8+ chars, uppercase, lowercase, number & special char'
+  if (name === 'LimitExceededException')     return 'Too many attempts — please wait a moment'
+  return err?.message || 'Something went wrong'
+}
 
 const GOOGLE_ICON = (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -42,8 +32,13 @@ const GITHUB_ICON = (
 )
 
 export default function AuthModal() {
-  const { setShowAuthModal, authMode, setAuthMode, signIn } = useApp()
-  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const {
+    setShowAuthModal, authMode, setAuthMode,
+    signIn, signUp, confirmSignUp, socialSignIn,
+    pendingConfirmEmail, COGNITO_ENABLED,
+  } = useApp()
+
+  const [form, setForm] = useState({ name: '', email: '', password: '', code: '' })
   const [loading, setLoading] = useState(false)
   const [socialLoading, setSocialLoading] = useState('')
   const [error, setError] = useState('')
@@ -51,54 +46,88 @@ export default function AuthModal() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  /* ── Submit handler — sign-in / sign-up / confirm ───────────────────────── */
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    // ── Confirm verification code ──
+    if (authMode === 'confirm') {
+      if (!form.code || form.code.length < 4) {
+        setError('Please enter the verification code sent to your email')
+        return
+      }
+      setLoading(true)
+      try {
+        const res = await confirmSignUp(pendingConfirmEmail || form.email, form.code)
+        if (res.success) {
+          toast.success('Email verified! Please sign in.')
+          setAuthMode('signin')
+          setForm(f => ({ ...f, code: '' }))
+        }
+      } catch (err) {
+        setError(friendlyError(err))
+      }
+      setLoading(false)
+      return
+    }
+
+    // ── Validate fields ──
     if (!form.email || !form.password) { setError('Please fill in all fields'); return }
     if (authMode === 'signup' && !form.name) { setError('Name is required'); return }
-    if (form.password.length < 6) { setError('Password must be at least 6 characters'); return }
+    if (form.password.length < 8) {
+      setError(COGNITO_ENABLED
+        ? 'Password: min 8 characters with uppercase, lowercase, number & special char'
+        : 'Password must be at least 8 characters')
+      return
+    }
 
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-
-    /* ── COGNITO INTEGRATION POINT ─────────────────────────────────────
-    import { signIn as amplifySignIn, signUp as amplifySignUp } from 'aws-amplify/auth'
-    if (authMode === 'signup') {
-      await amplifySignUp({ username: form.email, password: form.password,
-        options: { userAttributes: { email: form.email, name: form.name } } })
-    } else {
-      await amplifySignIn({ username: form.email, password: form.password })
+    try {
+      if (authMode === 'signup') {
+        const res = await signUp(form.email, form.password, form.name)
+        if (res.success && !res.confirmed) {
+          // Cognito needs email verification
+          toast.success('Verification code sent to your email!')
+          setAuthMode('confirm')
+        }
+      } else {
+        await signIn(form.email, form.password)
+      }
+    } catch (err) {
+      const msg = friendlyError(err)
+      setError(msg)
+      // Auto-switch to confirm if user hasn't verified yet
+      if (err?.name === 'UserNotConfirmedException') {
+        setAuthMode('confirm')
+      }
     }
-    const user = await getCurrentUser()
-    signIn(form.email, form.name || user.username)
-    ─────────────────────────────────────────────────────────────────── */
-
-    signIn(form.email, authMode === 'signup' ? form.name : form.email.split('@')[0])
     setLoading(false)
   }
 
+  /* ── Social auth (Google / GitHub) ──────────────────────────────────────── */
   const handleSocial = async (provider) => {
     setSocialLoading(provider)
-
-    /* ── COGNITO / SUPABASE SOCIAL LOGIN ───────────────────────────────
-    
-    OPTION A — AWS Cognito Hosted UI:
-      import { signInWithRedirect } from 'aws-amplify/auth'
-      await signInWithRedirect({ provider: provider === 'google' ? 'Google' : 'GitHub' })
-      // Cognito redirects back; handle in App.jsx with Hub.listen('auth', ...)
-
-    OPTION B — Supabase:
-      import { createClient } from '@supabase/supabase-js'
-      const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY)
-      await supabase.auth.signInWithOAuth({ provider,
-        options: { redirectTo: window.location.origin } })
-    ─────────────────────────────────────────────────────────────────── */
-
-    // Demo simulation (remove this block once real auth is wired up)
-    await new Promise(r => setTimeout(r, 1000))
-    signIn(`demo@${provider}.com`, `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`)
-    setSocialLoading('')
+    try {
+      await socialSignIn(provider === 'google' ? 'Google' : 'GitHub')
+    } catch (err) {
+      setError(friendlyError(err))
+      setSocialLoading('')
+    }
   }
+
+  /* ── Determine button / heading text ────────────────────────────────────── */
+  const isConfirm = authMode === 'confirm'
+  const isSignUp  = authMode === 'signup'
+  const heading   = isConfirm ? 'Verify your email'
+                  : isSignUp  ? 'Start your journey'
+                  :             'Welcome back, explorer'
+  const btnLabel  = isConfirm ? 'Verify Code'
+                  : isSignUp  ? 'Create Account'
+                  :             'Sign In'
+  const btnLoading = isConfirm ? 'Verifying...'
+                   : isSignUp  ? 'Creating account...'
+                   :             'Signing in...'
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowAuthModal(false)}>
@@ -107,13 +136,11 @@ export default function AuthModal() {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
             <div style={{ width:'34px', height:'34px', borderRadius:'9px', background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Compass size={17} color="#fff" />
+              {isConfirm ? <ShieldCheck size={17} color="#fff" /> : <Compass size={17} color="#fff" />}
             </div>
             <div>
-              <div style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'1.05rem', color:'var(--text)' }}>Roamly</div>
-              <div style={{ fontSize:'0.7rem', color:'var(--text2)' }}>
-                {authMode === 'signin' ? 'Welcome back, explorer' : 'Start your journey'}
-              </div>
+              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1.05rem', color:'var(--text)' }}>Nova<span style={{ color:'var(--accent)' }}>Trek</span></div>
+              <div style={{ fontSize:'0.7rem', color:'var(--text2)' }}>{heading}</div>
             </div>
           </div>
           <button className="btn-icon" onClick={() => setShowAuthModal(false)} style={{ width:'32px', height:'32px' }}>
@@ -121,42 +148,67 @@ export default function AuthModal() {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display:'flex', gap:'0.2rem', padding:'0.28rem', background:'var(--bg2)', borderRadius:'10px', marginBottom:'1.4rem' }}>
-          {['signin','signup'].map(m => (
-            <button key={m} onClick={() => { setAuthMode(m); setError('') }} style={{
-              flex:1, padding:'0.45rem', borderRadius:'8px', fontSize:'0.86rem', fontWeight:600,
-              background: authMode===m ? 'var(--accent)' : 'transparent',
-              color: authMode===m ? '#fff' : 'var(--text2)',
-              transition:'all 0.2s',
-            }}>
-              {m === 'signin' ? 'Sign In' : 'Sign Up'}
-            </button>
-          ))}
-        </div>
+        {/* Tabs (hidden during confirm) */}
+        {!isConfirm && (
+          <>
+            <div style={{ display:'flex', gap:'0.2rem', padding:'0.28rem', background:'var(--bg2)', borderRadius:'10px', marginBottom:'1.4rem' }}>
+              {['signin','signup'].map(m => (
+                <button key={m} onClick={() => { setAuthMode(m); setError('') }} style={{
+                  flex:1, padding:'0.45rem', borderRadius:'8px', fontSize:'0.86rem', fontWeight:600,
+                  background: authMode===m ? 'var(--accent)' : 'transparent',
+                  color: authMode===m ? '#fff' : 'var(--text2)',
+                  transition:'all 0.2s',
+                }}>
+                  {m === 'signin' ? 'Sign In' : 'Sign Up'}
+                </button>
+              ))}
+            </div>
 
-        {/* Social Buttons */}
-        <div style={{ display:'flex', gap:'0.6rem', marginBottom:'1.1rem' }}>
-          <button className="social-btn" onClick={() => handleSocial('google')} disabled={!!socialLoading}>
-            {socialLoading==='google' ? <div className="spinner" style={{width:'16px',height:'16px'}}/> : GOOGLE_ICON}
-            <span style={{ color:'var(--text)' }}>Google</span>
-          </button>
-          <button className="social-btn" onClick={() => handleSocial('github')} disabled={!!socialLoading}>
-            {socialLoading==='github' ? <div className="spinner" style={{width:'16px',height:'16px'}}/> : GITHUB_ICON}
-            <span style={{ color:'var(--text)' }}>GitHub</span>
-          </button>
-        </div>
+            {/* Social Buttons */}
+            <div style={{ display:'flex', gap:'0.6rem', marginBottom:'1.1rem' }}>
+              <button className="social-btn" onClick={() => handleSocial('google')} disabled={!!socialLoading}>
+                {socialLoading==='google' ? <div className="spinner" style={{width:'16px',height:'16px'}}/> : GOOGLE_ICON}
+                <span style={{ color:'var(--text)' }}>Google</span>
+              </button>
+              <button className="social-btn" onClick={() => handleSocial('github')} disabled={!!socialLoading}>
+                {socialLoading==='github' ? <div className="spinner" style={{width:'16px',height:'16px'}}/> : GITHUB_ICON}
+                <span style={{ color:'var(--text)' }}>GitHub</span>
+              </button>
+            </div>
 
-        {/* Divider */}
-        <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.1rem' }}>
-          <div style={{ flex:1, height:'1px', background:'var(--border)' }} />
-          <span style={{ fontSize:'0.75rem', color:'var(--text3)', fontWeight:500 }}>or continue with email</span>
-          <div style={{ flex:1, height:'1px', background:'var(--border)' }} />
-        </div>
+            {/* Divider */}
+            <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.1rem' }}>
+              <div style={{ flex:1, height:'1px', background:'var(--border)' }} />
+              <span style={{ fontSize:'0.75rem', color:'var(--text3)', fontWeight:500 }}>or continue with email</span>
+              <div style={{ flex:1, height:'1px', background:'var(--border)' }} />
+            </div>
+          </>
+        )}
 
-        {/* Email Form */}
+        {/* Form */}
         <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'0.9rem' }}>
-          {authMode === 'signup' && (
+          {/* Confirm mode — verification code */}
+          {isConfirm && (
+            <>
+              <div style={{ padding:'0.9rem', borderRadius:'10px', background:'var(--accent-glow)', border:'1px solid var(--border2)', marginBottom:'0.4rem', fontSize:'0.84rem', color:'var(--text2)', lineHeight:1.5 }}>
+                <KeyRound size={14} style={{ display:'inline', marginRight:'0.4rem', color:'var(--accent)' }}/>
+                We sent a 6-digit code to <strong style={{ color:'var(--text)' }}>{pendingConfirmEmail || form.email}</strong>. Enter it below to verify your account.
+              </div>
+              <div className="form-group">
+                <label className="form-label">Verification Code</label>
+                <div style={{ position:'relative' }}>
+                  <KeyRound size={15} style={{ position:'absolute', left:'0.85rem', top:'50%', transform:'translateY(-50%)', color:'var(--text3)', pointerEvents:'none' }} />
+                  <input className="form-input" placeholder="123456" value={form.code}
+                    onChange={e => set('code', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    style={{ paddingLeft:'2.4rem', letterSpacing:'0.3em', fontSize:'1.1rem', fontWeight:600 }}
+                    autoFocus maxLength={6} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Sign-up name field */}
+          {isSignUp && (
             <div className="form-group">
               <label className="form-label">Full Name</label>
               <div style={{ position:'relative' }}>
@@ -167,53 +219,80 @@ export default function AuthModal() {
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <div style={{ position:'relative' }}>
-              <Mail size={15} style={{ position:'absolute', left:'0.85rem', top:'50%', transform:'translateY(-50%)', color:'var(--text3)', pointerEvents:'none' }} />
-              <input className="form-input" type="email" placeholder="you@example.com" value={form.email}
-                onChange={e => set('email', e.target.value)} style={{ paddingLeft:'2.4rem' }} required />
-            </div>
-          </div>
+          {/* Email + Password (hidden during confirm) */}
+          {!isConfirm && (
+            <>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <div style={{ position:'relative' }}>
+                  <Mail size={15} style={{ position:'absolute', left:'0.85rem', top:'50%', transform:'translateY(-50%)', color:'var(--text3)', pointerEvents:'none' }} />
+                  <input className="form-input" type="email" placeholder="you@example.com" value={form.email}
+                    onChange={e => set('email', e.target.value)} style={{ paddingLeft:'2.4rem' }} required />
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <div style={{ position:'relative' }}>
-              <Lock size={15} style={{ position:'absolute', left:'0.85rem', top:'50%', transform:'translateY(-50%)', color:'var(--text3)', pointerEvents:'none' }} />
-              <input className="form-input" type={showPass ? 'text' : 'password'} placeholder="Min. 6 characters"
-                value={form.password} onChange={e => set('password', e.target.value)}
-                style={{ paddingLeft:'2.4rem', paddingRight:'2.8rem' }} required />
-              <button type="button" onClick={() => setShowPass(!showPass)}
-                style={{ position:'absolute', right:'0.85rem', top:'50%', transform:'translateY(-50%)', background:'none', color:'var(--text3)', padding:0 }}>
-                {showPass ? <EyeOff size={15}/> : <Eye size={15}/>}
-              </button>
-            </div>
-          </div>
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <div style={{ position:'relative' }}>
+                  <Lock size={15} style={{ position:'absolute', left:'0.85rem', top:'50%', transform:'translateY(-50%)', color:'var(--text3)', pointerEvents:'none' }} />
+                  <input className="form-input" type={showPass ? 'text' : 'password'}
+                    placeholder={COGNITO_ENABLED ? 'Min. 8 chars · A-z · 0-9 · !@#' : 'Min. 8 characters'}
+                    value={form.password} onChange={e => set('password', e.target.value)}
+                    style={{ paddingLeft:'2.4rem', paddingRight:'2.8rem' }} required />
+                  <button type="button" onClick={() => setShowPass(!showPass)}
+                    style={{ position:'absolute', right:'0.85rem', top:'50%', transform:'translateY(-50%)', background:'none', color:'var(--text3)', padding:0 }}>
+                    {showPass ? <EyeOff size={15}/> : <Eye size={15}/>}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
+          {/* Error */}
           {error && (
             <div style={{ padding:'0.6rem 0.9rem', borderRadius:'8px', background:'var(--coral2)', border:'1px solid rgba(225,29,72,0.2)', fontSize:'0.83rem', color:'var(--coral)' }}>
               {error}
             </div>
           )}
 
+          {/* Submit */}
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ width:'100%', justifyContent:'center' }}>
             {loading
-              ? <><div className="spinner"/>{authMode==='signin' ? 'Signing in...' : 'Creating account...'}</>
-              : <>{authMode==='signin' ? 'Sign In' : 'Create Account'}<ArrowRight size={15}/></>}
+              ? <><div className="spinner"/>{btnLoading}</>
+              : <>{btnLabel}<ArrowRight size={15}/></>}
           </button>
         </form>
 
-        <p style={{ textAlign:'center', fontSize:'0.76rem', color:'var(--text3)', marginTop:'1.1rem' }}>
-          {authMode==='signin' ? "No account? " : "Already have one? "}
-          <button onClick={() => { setAuthMode(authMode==='signin'?'signup':'signin'); setError('') }}
-            style={{ background:'none', color:'var(--accent)', fontWeight:600, fontSize:'0.76rem' }}>
-            {authMode==='signin' ? 'Sign up free' : 'Sign in'}
-          </button>
-        </p>
+        {/* Footer links */}
+        {!isConfirm && (
+          <p style={{ textAlign:'center', fontSize:'0.76rem', color:'var(--text3)', marginTop:'1.1rem' }}>
+            {authMode==='signin' ? "No account? " : "Already have one? "}
+            <button onClick={() => { setAuthMode(authMode==='signin'?'signup':'signin'); setError('') }}
+              style={{ background:'none', color:'var(--accent)', fontWeight:600, fontSize:'0.76rem' }}>
+              {authMode==='signin' ? 'Sign up free' : 'Sign in'}
+            </button>
+          </p>
+        )}
 
-        {/* Cognito notice */}
-        <div style={{ marginTop:'1rem', padding:'0.65rem 0.85rem', borderRadius:'8px', background:'var(--amber2)', border:'1px solid rgba(251,191,36,0.2)', fontSize:'0.74rem', color:'var(--amber)', lineHeight:1.5 }}>
-          <strong>💡 For production:</strong> Wire Google/GitHub to AWS Cognito or Supabase. See comments in <code>AuthModal.jsx</code>.
+        {isConfirm && (
+          <p style={{ textAlign:'center', fontSize:'0.76rem', color:'var(--text3)', marginTop:'1.1rem' }}>
+            <button onClick={() => { setAuthMode('signin'); setError('') }}
+              style={{ background:'none', color:'var(--accent)', fontWeight:600, fontSize:'0.76rem' }}>
+              ← Back to sign in
+            </button>
+          </p>
+        )}
+
+        {/* Auth mode badge */}
+        <div style={{ marginTop:'1rem', padding:'0.55rem 0.85rem', borderRadius:'8px',
+          background: COGNITO_ENABLED ? 'var(--green2)' : 'var(--amber2)',
+          border: COGNITO_ENABLED ? '1px solid rgba(52,211,153,0.2)' : '1px solid rgba(251,191,36,0.2)',
+          fontSize:'0.74rem',
+          color: COGNITO_ENABLED ? 'var(--green)' : 'var(--amber)',
+          lineHeight:1.5, display:'flex', alignItems:'center', gap:'0.4rem' }}>
+          {COGNITO_ENABLED
+            ? <><ShieldCheck size={13}/> <span>Secured by <strong>AWS Cognito</strong> — real authentication enabled</span></>
+            : <><span>💡 <strong>Demo mode</strong> — set Cognito env vars for real auth. See README.</span></>}
         </div>
       </div>
     </div>

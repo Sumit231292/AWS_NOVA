@@ -3,7 +3,7 @@ AI Travel Planner - Backend API
 Uses Amazon Nova (via Amazon Bedrock) for intelligent travel planning
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -11,8 +11,13 @@ from typing import Optional, List
 import boto3
 import json
 import os
+import uuid
 from datetime import datetime
+from decimal import Decimal
+from functools import lru_cache
+import urllib.request
 from dotenv import load_dotenv
+from jose import jwt, JWTError
 
 load_dotenv()  # Load .env file before boto3 client is created
 
@@ -40,6 +45,74 @@ bedrock_client = boto3.client(
 )
 
 MODEL_ID = "amazon.nova-lite-v1:0"  # Cost-effective; swap to amazon.nova-pro-v1:0 for richer output
+
+
+# ─── AWS Cognito JWT Verification ─────────────────────────────────────────────
+
+COGNITO_REGION = os.getenv("COGNITO_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "")
+COGNITO_APP_CLIENT_ID = os.getenv("COGNITO_APP_CLIENT_ID", "")
+COGNITO_ISSUER = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}"
+
+
+# ─── DynamoDB for Persistent Saved Trips ──────────────────────────────────────
+
+DYNAMODB_TABLE = os.getenv("DYNAMODB_TABLE", "roamly-trips")
+dynamodb_resource = boto3.resource(
+    "dynamodb",
+    region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
+)
+
+
+@lru_cache()
+def _fetch_jwks() -> tuple:
+    """Fetch and cache Cognito JWKS (JSON Web Key Set)."""
+    url = f"{COGNITO_ISSUER}/.well-known/jwks.json"
+    with urllib.request.urlopen(url) as resp:
+        keys = json.loads(resp.read())["keys"]
+    return tuple(json.dumps(k) for k in keys)   # tuple for hashability
+
+
+def verify_cognito_token(token: str) -> dict:
+    """Verify a Cognito JWT and return user claims."""
+    try:
+        jwks_raw = _fetch_jwks()
+        jwks = [json.loads(k) for k in jwks_raw]
+        headers = jwt.get_unverified_headers(token)
+        kid = headers.get("kid")
+        key = next((k for k in jwks if k["kid"] == kid), None)
+        if not key:
+            raise HTTPException(status_code=401, detail="Unknown signing key")
+        claims = jwt.decode(
+            token, key, algorithms=["RS256"],
+            audience=COGNITO_APP_CLIENT_ID,
+            issuer=COGNITO_ISSUER,
+        )
+        return claims
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail=f"Token verification failed: {e}")
+
+
+async def get_current_user(authorization: str = Header(..., alias="Authorization")):
+    """FastAPI dependency — require valid Cognito JWT."""
+    if not COGNITO_USER_POOL_ID:
+        raise HTTPException(status_code=503, detail="Auth not configured on server")
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+    return verify_cognito_token(authorization[7:])
+
+
+async def get_optional_user(authorization: Optional[str] = Header(None, alias="Authorization")):
+    """FastAPI dependency — return user claims or None."""
+    if not COGNITO_USER_POOL_ID or not authorization or not authorization.startswith("Bearer "):
+        return None
+    try:
+        return verify_cognito_token(authorization[7:])
+    except Exception:
+        return None
 
 
 # ─── Request / Response Models ────────────────────────────────────────────────
@@ -395,6 +468,113 @@ Return JSON: {{"tips": [{{"title": "...", "description": "...", "icon": "emoji"}
         return {"success": True, "data": data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Saved Itineraries — DynamoDB + Cognito Auth ─────────────────────────────
+
+class SaveItineraryRequest(BaseModel):
+    destination: str
+    dates: str
+    travelers: int = 1
+    budget: str = ""
+    title: str = ""
+    itinerary: dict
+    tripForm: dict
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Auto-create DynamoDB table for saved trips if Cognito is configured."""
+    if not COGNITO_USER_POOL_ID:
+        print("ℹ  COGNITO_USER_POOL_ID not set — auth endpoints disabled (local mode)")
+        return
+    print(f"✓ Cognito configured: pool={COGNITO_USER_POOL_ID}")
+    try:
+        ddb_client = boto3.client(
+            "dynamodb",
+            region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
+        )
+        tables = ddb_client.list_tables()["TableNames"]
+        if DYNAMODB_TABLE not in tables:
+            ddb_client.create_table(
+                TableName=DYNAMODB_TABLE,
+                KeySchema=[
+                    {"AttributeName": "userId", "KeyType": "HASH"},
+                    {"AttributeName": "id", "KeyType": "RANGE"},
+                ],
+                AttributeDefinitions=[
+                    {"AttributeName": "userId", "AttributeType": "S"},
+                    {"AttributeName": "id", "AttributeType": "S"},
+                ],
+                BillingMode="PAY_PER_REQUEST",
+            )
+            print(f"✓ Created DynamoDB table: {DYNAMODB_TABLE}")
+        else:
+            print(f"✓ DynamoDB table exists: {DYNAMODB_TABLE}")
+    except Exception as e:
+        print(f"⚠  DynamoDB auto-setup: {e}")
+
+
+@app.get("/api/itineraries")
+async def list_saved_trips(user: dict = Depends(get_current_user)):
+    """List all saved itineraries for the authenticated user."""
+    from boto3.dynamodb.conditions import Key as DDBKey
+    table = dynamodb_resource.Table(DYNAMODB_TABLE)
+    resp = table.query(
+        KeyConditionExpression=DDBKey("userId").eq(user["sub"]),
+        ScanIndexForward=False,
+    )
+    items = []
+    for item in resp.get("Items", []):
+        item["itinerary"] = json.loads(item.pop("itinerary_json", "{}"))
+        item["tripForm"] = json.loads(item.pop("tripForm_json", "{}"))
+        # Convert Decimal → int for JSON serialization
+        if isinstance(item.get("travelers"), Decimal):
+            item["travelers"] = int(item["travelers"])
+        items.append(item)
+    return {"success": True, "data": items}
+
+
+@app.post("/api/itineraries")
+async def save_trip(body: SaveItineraryRequest, user: dict = Depends(get_current_user)):
+    """Save an itinerary to DynamoDB for the authenticated user."""
+    table = dynamodb_resource.Table(DYNAMODB_TABLE)
+    trip_id = str(uuid.uuid4())
+    item = {
+        "userId": user["sub"],
+        "id": trip_id,
+        "savedAt": datetime.utcnow().isoformat(),
+        "destination": body.destination,
+        "dates": body.dates,
+        "travelers": body.travelers,
+        "budget": body.budget,
+        "title": body.title,
+        "itinerary_json": json.dumps(body.itinerary),
+        "tripForm_json": json.dumps(body.tripForm),
+    }
+    table.put_item(Item=item)
+    return {
+        "success": True,
+        "data": {
+            "userId": user["sub"], "id": trip_id,
+            "savedAt": item["savedAt"],
+            "destination": body.destination, "dates": body.dates,
+            "travelers": body.travelers, "budget": body.budget,
+            "title": body.title,
+            "itinerary": body.itinerary, "tripForm": body.tripForm,
+        }
+    }
+
+
+@app.delete("/api/itineraries/{trip_id}")
+async def delete_saved_trip(trip_id: str, user: dict = Depends(get_current_user)):
+    """Delete a saved itinerary from DynamoDB."""
+    table = dynamodb_resource.Table(DYNAMODB_TABLE)
+    table.delete_item(Key={"userId": user["sub"], "id": trip_id})
+    return {"success": True}
 
 
 if __name__ == "__main__":

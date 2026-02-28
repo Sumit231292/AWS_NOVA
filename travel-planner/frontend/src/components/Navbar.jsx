@@ -4,11 +4,11 @@ import { Compass, Map, Package, DollarSign, MessageCircle, Menu, X, Sun, Moon, B
 import { useApp } from '../context/AppContext'
 
 const navLinks = [
-  { to: '/plan', label: 'Plan Trip', icon: Map },
-  { to: '/packing', label: 'Packing', icon: Package },
-  { to: '/budget', label: 'Budget', icon: DollarSign },
-  { to: '/chat', label: 'AI Chat', icon: MessageCircle },
-  { to: '/saved', label: 'Saved', icon: BookMarked },
+  { to: '/plan', label: 'New Mission', icon: Map },
+  { to: '/packing', label: 'Loadout', icon: Package },
+  { to: '/budget', label: 'Cost Intel', icon: DollarSign },
+  { to: '/chat', label: 'Nova Agent', icon: MessageCircle },
+  { to: '/saved', label: 'Archive', icon: BookMarked },
 ]
 
 export default function Navbar() {
@@ -19,15 +19,15 @@ export default function Navbar() {
   const isDark = theme === 'dark'
 
   return (
-    <nav style={{ background:'var(--navbar-bg)', backdropFilter:'blur(20px)', borderBottom:'1px solid var(--border)', position:'sticky', top:0, zIndex:100, transition:'background 0.3s' }}>
+    <nav style={{ background:'var(--navbar-bg)', backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)', borderBottom:'1px solid var(--glass-border)', position:'sticky', top:0, zIndex:100, transition:'background 0.3s', boxShadow:'0 1px 20px rgba(99,179,237,0.06)' }}>
       <div style={{ maxWidth:'1200px', margin:'0 auto', padding:'0 1.5rem', display:'flex', alignItems:'center', justifyContent:'space-between', height:'64px' }}>
         
         <Link to="/" style={{ display:'flex', alignItems:'center', gap:'0.55rem', textDecoration:'none' }}>
           <div style={{ width:'34px', height:'34px', borderRadius:'10px', background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 12px var(--accent-glow)' }}>
             <Compass size={18} color="#fff" />
           </div>
-          <span style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'1.2rem', color:'var(--text)', letterSpacing:'-0.02em' }}>
-            Roam<span style={{ color:'var(--accent)' }}>ly</span>
+          <span style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1.2rem', color:'var(--text)', letterSpacing:'-0.02em' }}>
+            Nova<span style={{ color:'var(--accent)' }}>Trek</span>
           </span>
         </Link>
 

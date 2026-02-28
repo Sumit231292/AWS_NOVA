@@ -1,9 +1,23 @@
 import axios from 'axios'
+import { fetchAuthSession } from 'aws-amplify/auth'
+import { COGNITO_ENABLED } from '../config/amplify'
 
 const api = axios.create({
   baseURL: '/api',
   timeout: 120000, // 2 minutes — AI responses can take time
   headers: { 'Content-Type': 'application/json' }
+})
+
+// ── Inject Cognito JWT on every request ──────────────────────────────────────
+api.interceptors.request.use(async (config) => {
+  if (COGNITO_ENABLED) {
+    try {
+      const session = await fetchAuthSession()
+      const token = session.tokens?.idToken?.toString()
+      if (token) config.headers.Authorization = `Bearer ${token}`
+    } catch { /* not signed in — continue without token */ }
+  }
+  return config
 })
 
 api.interceptors.response.use(
@@ -34,6 +48,11 @@ export const travelAPI = {
 
   /** Health check */
   health: () => api.get('/health'),
+
+  // ── Saved Itineraries (DynamoDB-backed, auth-required) ───────────────────
+  listItineraries:  ()     => api.get('/itineraries'),
+  saveItinerary:    (data) => api.post('/itineraries', data),
+  deleteItinerary:  (id)   => api.delete(`/itineraries/${id}`),
 }
 
 export default api

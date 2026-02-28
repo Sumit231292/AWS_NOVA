@@ -80,9 +80,13 @@ export default function PlannerPage() {
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '3rem 2rem' }}>
       <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Plan Your Trip</h1>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 1rem', borderRadius: '50px', background: 'var(--accent-glow)', border: '1px solid var(--border2)', marginBottom: '1rem' }}>
+          <Plane size={12} color="var(--accent)" />
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono',monospace" }}>Mission Planner</span>
+        </div>
+        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>New Mission</h1>
         <p style={{ color: 'var(--text2)' }}>
-          Tell us about your dream trip and Amazon Nova will craft the perfect itinerary.
+          Configure your mission parameters — Amazon Nova will generate a hyper-personalized itinerary in under 30 seconds.
         </p>
       </div>
 
@@ -90,11 +94,11 @@ export default function PlannerPage() {
         {/* Basic Info */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plane size={20} color="#c9a96e" /> Destination & Origin
+            <Plane size={20} color="var(--accent)" /> Target & Origin
           </h2>
           <div className="grid-2">
             <div className="form-group">
-              <label className="form-label">Where are you going? *</label>
+              <label className="form-label">Target destination *</label>
               <input
                 className="form-input"
                 placeholder="e.g. Tokyo, Japan"
@@ -104,7 +108,7 @@ export default function PlannerPage() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Where are you flying from? *</label>
+              <label className="form-label">Departing from *</label>
               <input
                 className="form-input"
                 placeholder="e.g. New York, USA"
@@ -119,7 +123,7 @@ export default function PlannerPage() {
         {/* Dates & Travelers */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Calendar size={20} color="#c9a96e" /> Dates & Travelers
+            <Calendar size={20} color="var(--teal)" /> Dates & Travelers
           </h2>
           <div className="grid-3">
             <div className="form-group">
@@ -154,12 +158,12 @@ export default function PlannerPage() {
                   onClick={() => set('travelers', Math.max(1, form.travelers - 1))}
                   style={{
                     width: '36px', height: '36px', borderRadius: '8px',
-                    background: 'var(--deep)', border: '1px solid var(--border)',
-                    color: '#c9a96e', fontSize: '1.2rem', cursor: 'pointer',
+                    background: 'var(--card2)', border: '1px solid var(--border)',
+                    color: 'var(--accent)', fontSize: '1.2rem', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >-</button>
-                <span style={{ fontSize: '1.3rem', fontWeight: 600, minWidth: '30px', textAlign: 'center' }}>
+                <span style={{ fontSize: '1.3rem', fontWeight: 700, minWidth: '30px', textAlign: 'center', fontFamily: "'JetBrains Mono',monospace", color: 'var(--accent)' }}>
                   {form.travelers}
                 </span>
                 <button
@@ -167,8 +171,8 @@ export default function PlannerPage() {
                   onClick={() => set('travelers', Math.min(20, form.travelers + 1))}
                   style={{
                     width: '36px', height: '36px', borderRadius: '8px',
-                    background: 'var(--deep)', border: '1px solid var(--border)',
-                    color: '#c9a96e', fontSize: '1.2rem', cursor: 'pointer',
+                    background: 'var(--card2)', border: '1px solid var(--border)',
+                    color: 'var(--accent)', fontSize: '1.2rem', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >+</button>
@@ -180,7 +184,7 @@ export default function PlannerPage() {
         {/* Budget */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <DollarSign size={20} color="#c9a96e" /> Budget Level
+            <DollarSign size={20} color="var(--green)" /> Budget Level
           </h2>
           <div className="grid-3">
             {budgetOptions.map(({ value, label, desc, icon }) => (
@@ -190,15 +194,15 @@ export default function PlannerPage() {
                 style={{
                   padding: '1.25rem',
                   borderRadius: '12px',
-                  border: `2px solid ${form.budget === value ? '#c9a96e' : 'rgba(201,169,110,0.2)'}`,
-                  background: form.budget === value ? 'rgba(201,169,110,0.08)' : 'transparent',
+                  border: `2px solid ${form.budget === value ? 'var(--accent)' : 'var(--border)'}`,
+                  background: form.budget === value ? 'var(--accent-glow)' : 'transparent',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   textAlign: 'center',
                 }}
               >
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{icon}</div>
-                <div style={{ fontWeight: 600, color: form.budget === value ? '#c9a96e' : '#f5ede0' }}>
+                <div style={{ fontWeight: 600, color: form.budget === value ? 'var(--accent)' : 'var(--text)' }}>
                   {label}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text2)', marginTop: '0.25rem' }}>{desc}</div>
@@ -210,7 +214,7 @@ export default function PlannerPage() {
         {/* Interests */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Heart size={20} color="#c9a96e" /> Interests (select all that apply)
+            <Heart size={20} color="var(--coral)" /> Mission Parameters — Interests
           </h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
             {interests.map(({ id, label }) => (
@@ -221,9 +225,9 @@ export default function PlannerPage() {
                 style={{
                   padding: '0.5rem 1.25rem',
                   borderRadius: '50px',
-                  border: `1px solid ${form.interests.includes(id) ? '#c9a96e' : 'rgba(201,169,110,0.25)'}`,
-                  background: form.interests.includes(id) ? 'rgba(201,169,110,0.12)' : 'transparent',
-                  color: form.interests.includes(id) ? '#c9a96e' : '#d4c5ae',
+                  border: `1px solid ${form.interests.includes(id) ? 'var(--accent)' : 'var(--border)'}`,
+                  background: form.interests.includes(id) ? 'var(--accent-glow)' : 'transparent',
+                  color: form.interests.includes(id) ? 'var(--accent)' : 'var(--text2)',
                   fontSize: '0.9rem',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -261,19 +265,22 @@ export default function PlannerPage() {
             {loading ? (
               <>
                 <div className="spinner" />
-                Amazon Nova is planning...
+                Nova is generating your mission...
               </>
             ) : (
               <>
-                Generate My Itinerary
+                Generate Mission Briefing
                 <ChevronRight size={20} />
               </>
             )}
           </button>
           {loading && (
-            <p style={{ color: 'var(--text2)', marginTop: '1rem', fontSize: '0.9rem' }}>
-              🤖 Amazon Nova is crafting your perfect trip — this takes about 15-30 seconds...
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
+              <span className="pulse-dot" />
+              <p style={{ color: 'var(--text3)', fontSize: '0.82rem', fontFamily: "'JetBrains Mono',monospace" }}>
+                amazon.nova-lite-v1:0 processing · ~15–30s
+              </p>
+            </div>
           )}
         </div>
       </form>

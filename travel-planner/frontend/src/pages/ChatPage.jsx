@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, MessageCircle, Bot, User, Sparkles } from 'lucide-react'
+import { Send, Terminal, Bot, User, Zap, ChevronRight } from 'lucide-react'
 import { travelAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 const SUGGESTED = [
-  "What are the best hidden gems in Kyoto?",
-  "Plan a 3-day weekend in Amsterdam for food lovers",
-  "What's the best time to visit Patagonia?",
-  "How much should I budget for 2 weeks in Southeast Asia?",
-  "What should I pack for a winter trip to Iceland?",
-  "Give me tips for travelling solo in Japan",
+  "Best hidden gems in Kyoto?",
+  "3-day Amsterdam food itinerary",
+  "Best time to visit Patagonia?",
+  "2-week SE Asia budget estimate",
+  "Iceland winter packing list",
+  "Solo travel tips for Japan",
 ]
 
 function MessageBubble({ msg }) {
@@ -25,39 +25,45 @@ function MessageBubble({ msg }) {
     }}>
       {/* Avatar */}
       <div style={{
-        width: '36px',
-        height: '36px',
-        borderRadius: '50%',
-        background: isUser ? 'rgba(74,144,217,0.2)' : 'rgba(201,169,110,0.2)',
-        border: `1px solid ${isUser ? 'rgba(74,144,217,0.4)' : 'rgba(201,169,110,0.4)'}`,
+        width: '34px',
+        height: '34px',
+        borderRadius: '10px',
+        background: isUser ? 'var(--accent-glow)' : 'var(--teal2)',
+        border: `1px solid ${isUser ? 'var(--border2)' : 'rgba(45,212,191,0.3)'}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
+        boxShadow: isUser ? '0 0 10px var(--accent-glow)' : '0 0 10px rgba(45,212,191,0.2)',
       }}>
-        {isUser ? <User size={16} color="#4a90d9" /> : <Bot size={16} color="#c9a96e" />}
+        {isUser
+          ? <User size={15} color="var(--accent)" />
+          : <Bot size={15} color="var(--teal)" />}
       </div>
 
       {/* Bubble */}
       <div style={{
-        maxWidth: '75%',
+        maxWidth: '76%',
         padding: '0.85rem 1.1rem',
-        borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-        background: isUser ? 'rgba(74,144,217,0.12)' : 'rgba(201,169,110,0.07)',
-        border: `1px solid ${isUser ? 'rgba(74,144,217,0.25)' : 'rgba(201,169,110,0.2)'}`,
+        borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+        background: isUser ? 'var(--accent-glow)' : 'var(--glass)',
+        backdropFilter: isUser ? 'none' : 'blur(12px)',
+        WebkitBackdropFilter: isUser ? 'none' : 'blur(12px)',
+        border: `1px solid ${isUser ? 'var(--border2)' : 'var(--glass-border)'}`,
         fontSize: '0.93rem',
-        lineHeight: 1.65,
+        lineHeight: 1.7,
         color: 'var(--text)',
         whiteSpace: 'pre-wrap',
+        boxShadow: isUser ? '0 2px 12px var(--accent-glow)' : 'none',
       }}>
         {msg.content}
         {msg.loading && (
-          <span style={{ display: 'inline-flex', gap: '3px', alignItems: 'center', marginLeft: '0.5rem' }}>
+          <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center', marginLeft: '0.6rem' }}>
             {[0, 1, 2].map(i => (
               <span key={i} style={{
                 width: '6px', height: '6px', borderRadius: '50%',
-                background: '#c9a96e',
-                animation: 'pulse-gold 1.2s ease infinite',
+                background: 'var(--teal)',
+                animation: 'pulse 1.2s ease infinite',
                 animationDelay: `${i * 0.2}s`,
               }} />
             ))}
@@ -72,7 +78,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "✈️ Hello! I'm Nova, your AI travel concierge powered by Amazon Nova. I can help you plan trips, find hidden gems, estimate budgets, suggest itineraries, and answer any travel question. Where shall we explore today?",
+      content: "// SYSTEM READY\n\nHey! I'm Nova — your AI travel concierge running on Amazon Nova via Bedrock. I can generate itineraries, find hidden gems, estimate budgets, and answer anything travel-related.\n\nWhere shall we go? 🌍",
     }
   ])
   const [input, setInput] = useState('')
@@ -142,25 +148,28 @@ export default function ChatPage() {
       flexDirection: 'column',
     }}>
       {/* Header */}
-      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{
-          width: '48px',
-          height: '48px',
-          borderRadius: '14px',
-          background: 'linear-gradient(135deg, rgba(201,169,110,0.3), rgba(232,201,138,0.1))',
-          border: '1px solid rgba(201,169,110,0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Bot size={24} color="#c9a96e" />
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '14px',
+            background: 'linear-gradient(135deg, var(--accent-glow), var(--teal2))',
+            border: '1px solid var(--glass-border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: 'var(--neon-glow)',
+          }}>
+            <Terminal size={22} color="var(--teal)" />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '1.4rem', letterSpacing: '-0.02em' }}>Nova <span style={{ color: 'var(--text3)', fontWeight: 400, fontSize: '1rem' }}>/ AI Travel Concierge</span></h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+              <span className="pulse-dot" style={{ width: '6px', height: '6px' }} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--teal)', fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}>amazon.nova-lite-v1:0 · us-east-1</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 style={{ fontSize: '1.5rem' }}>Nova — AI Travel Concierge</h1>
-          <p style={{ fontSize: '0.8rem', color: '#c9a96e' }}>
-            <Sparkles size={12} style={{ display: 'inline', marginRight: '0.3rem' }} />
-            Powered by Amazon Nova · Amazon Bedrock
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.8rem', borderRadius: '8px', background: 'var(--green2)', border: '1px solid rgba(52,211,153,0.2)' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 6px var(--green)', display: 'inline-block' }} />
+          <span style={{ fontSize: '0.72rem', color: 'var(--green)', fontWeight: 600, letterSpacing: '0.06em' }}>LIVE</span>
         </div>
       </div>
 
@@ -172,19 +181,23 @@ export default function ChatPage() {
               key={i}
               onClick={() => sendMessage(s)}
               style={{
-                padding: '0.45rem 1rem',
-                borderRadius: '50px',
-                background: 'rgba(201,169,110,0.07)',
-                border: '1px solid rgba(201,169,110,0.25)',
+                padding: '0.38rem 0.9rem',
+                borderRadius: '8px',
+                background: 'var(--glass)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid var(--glass-border)',
                 color: 'var(--text2)',
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
+                fontFamily: "'JetBrains Mono', monospace",
                 cursor: 'pointer',
                 transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', gap: '0.35rem',
               }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = '#c9a96e'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(201,169,110,0.25)'}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.boxShadow = 'var(--neon-glow)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.color = 'var(--text2)'; e.currentTarget.style.boxShadow = 'none' }}
             >
-              {s}
+              <ChevronRight size={11} style={{ color: 'var(--accent)', flexShrink: 0 }} />{s}
             </button>
           ))}
         </div>
@@ -204,17 +217,25 @@ export default function ChatPage() {
       {/* Input */}
       <div style={{
         padding: '1rem 0 1.5rem',
-        borderTop: '1px solid rgba(201,169,110,0.15)',
+        borderTop: '1px solid var(--glass-border)',
       }}>
         <div style={{
           display: 'flex',
           gap: '0.75rem',
-          background: 'var(--card)',
-          border: '1px solid rgba(201,169,110,0.25)',
-          borderRadius: '16px',
-          padding: '0.5rem 0.75rem 0.5rem 1.25rem',
+          background: 'var(--glass)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '14px',
+          padding: '0.5rem 0.75rem 0.5rem 1.1rem',
           alignItems: 'flex-end',
-        }}>
+          transition: 'border-color 0.2s, box-shadow 0.2s',
+        }}
+          onFocus={() => {}}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.boxShadow = 'var(--neon-glow)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.boxShadow = 'none' }}
+        >
+          <span style={{ color: 'var(--accent)', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.9rem', paddingBottom: '0.45rem', userSelect: 'none', opacity: 0.7 }}>›</span>
           <textarea
             ref={inputRef}
             value={input}
@@ -228,38 +249,34 @@ export default function ChatPage() {
               border: 'none',
               outline: 'none',
               color: 'var(--text)',
-              fontSize: '0.95rem',
+              fontSize: '0.93rem',
               resize: 'none',
               maxHeight: '120px',
               lineHeight: 1.6,
-              padding: '0.4rem 0',
-              fontFamily: 'DM Sans, sans-serif',
+              padding: '0.42rem 0',
+              fontFamily: "'Inter', sans-serif",
             }}
           />
           <button
             onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
+              width: '38px', height: '38px', borderRadius: '10px',
               background: input.trim() && !loading
-                ? 'linear-gradient(135deg, #c9a96e, #e8c98a)'
-                : 'rgba(201,169,110,0.15)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+                ? 'linear-gradient(135deg, var(--accent), var(--teal))'
+                : 'var(--card2)',
+              border: `1px solid ${input.trim() && !loading ? 'transparent' : 'var(--border)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
-              flexShrink: 0,
-              transition: 'all 0.2s',
+              flexShrink: 0, transition: 'all 0.2s',
+              boxShadow: input.trim() && !loading ? 'var(--shadow-accent)' : 'none',
             }}
           >
-            <Send size={18} color={input.trim() && !loading ? '#0d0d1a' : '#c9a96e'} />
+            <Send size={16} color={input.trim() && !loading ? '#fff' : 'var(--text3)'} />
           </button>
         </div>
-        <p style={{ textAlign: 'center', fontSize: '0.73rem', color: 'var(--text2)', marginTop: '0.6rem', opacity: 0.6 }}>
-          Press Enter to send · Shift+Enter for new line
+        <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--text3)', marginTop: '0.55rem', fontFamily: "'JetBrains Mono',monospace" }}>
+          Enter ↵ send · Shift+Enter new line
         </p>
       </div>
     </div>

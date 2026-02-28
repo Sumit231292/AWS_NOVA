@@ -32,7 +32,7 @@ export default function BudgetPage() {
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '3rem 2rem' }}>
       <div style={{ marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-          <DollarSign size={32} style={{ display: 'inline', marginRight: '0.5rem', color: '#4caf7a' }} />
+          <DollarSign size={32} style={{ display: 'inline', marginRight: '0.5rem', color: 'var(--green)' }} />
           Budget Estimator
         </h1>
         <p style={{ color: 'var(--text2)' }}>Get AI-powered cost estimates for your trip to any destination.</p>
@@ -70,9 +70,9 @@ export default function BudgetPage() {
                     flex: 1,
                     padding: '0.6rem',
                     borderRadius: '8px',
-                    border: `1px solid ${form.budget_level === l ? '#c9a96e' : 'rgba(201,169,110,0.2)'}`,
-                    background: form.budget_level === l ? 'rgba(201,169,110,0.12)' : 'transparent',
-                    color: form.budget_level === l ? '#c9a96e' : '#d4c5ae',
+                    border: `1px solid ${form.budget_level === l ? 'var(--accent)' : 'var(--border)'}`,
+                    background: form.budget_level === l ? 'var(--accent-glow)' : 'transparent',
+                    color: form.budget_level === l ? 'var(--accent)' : 'var(--text2)',
                     fontSize: '0.85rem',
                     cursor: 'pointer',
                     textTransform: 'capitalize',
@@ -94,7 +94,7 @@ export default function BudgetPage() {
       {result && (
         <div style={{ animation: 'fadeUp 0.5s ease' }}>
           {result.summary && (
-            <div style={{ padding: '1rem 1.5rem', borderRadius: '12px', background: 'rgba(76,175,122,0.08)', border: '1px solid rgba(76,175,122,0.25)', marginBottom: '1.5rem' }}>
+            <div style={{ padding: '1rem 1.5rem', borderRadius: '12px', background: 'var(--green2)', border: '1px solid rgba(52,211,153,0.25)', marginBottom: '1.5rem' }}>
               <p style={{ fontSize: '0.95rem', color: 'var(--text2)' }}>{result.summary}</p>
             </div>
           )}
@@ -103,10 +103,10 @@ export default function BudgetPage() {
           <div className="grid-3" style={{ marginBottom: '1.5rem' }}>
             {result.total_per_person && Object.entries(result.total_per_person).map(([range, amount]) => (
               <div key={range} className="card" style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '0.75rem', color: '#c9a96e', textTransform: 'capitalize', marginBottom: '0.5rem' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--accent)', textTransform: 'capitalize', marginBottom: '0.5rem', fontFamily: "'JetBrains Mono',monospace" }}>
                   {range} / person
                 </p>
-                <p style={{ fontSize: '2rem', fontFamily: 'Playfair Display, serif', color: 'var(--text)' }}>
+                <p style={{ fontSize: '2rem', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--text)' }}>
                   ${typeof amount === 'number' ? amount.toLocaleString() : amount}
                 </p>
               </div>
@@ -125,15 +125,15 @@ export default function BudgetPage() {
                   <div key={cat} style={{ marginBottom: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                       <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{cat}</span>
-                      <span style={{ color: '#c9a96e' }}>${data.average}/day</span>
+                      <span style={{ color: 'var(--green)', fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>${data.average}/day</span>
                     </div>
-                    <div style={{ height: '8px', borderRadius: '4px', background: 'var(--deep)', marginBottom: '0.5rem', overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ height: '8px', borderRadius: '4px', background: 'var(--bg3)', marginBottom: '0.5rem', overflow: 'hidden', position: 'relative' }}>
                       <div style={{
                         position: 'absolute',
                         left: `${maxVal > 0 ? (data.low / maxVal) * 100 : 0}%`,
                         width: `${maxVal > 0 ? ((data.high - data.low) / maxVal) * 100 : 50}%`,
                         height: '100%',
-                        background: 'linear-gradient(90deg, #4a90d9, #c9a96e)',
+                        background: 'linear-gradient(90deg, var(--accent), var(--teal))',
                         borderRadius: '4px',
                       }} />
                     </div>
@@ -152,7 +152,7 @@ export default function BudgetPage() {
             {result.money_saving_tips?.length > 0 && (
               <div className="card">
                 <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <TrendingDown size={18} color="#4caf7a" /> Money-Saving Tips
+                  <TrendingDown size={18} color="var(--green)" /> Money-Saving Tips
                 </h3>
                 {result.money_saving_tips.map((tip, i) => (
                   <p key={i} style={{ fontSize: '0.85rem', color: 'var(--text2)', marginBottom: '0.5rem' }}>💡 {tip}</p>
@@ -162,7 +162,7 @@ export default function BudgetPage() {
             {result.splurge_recommendations?.length > 0 && (
               <div className="card">
                 <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <TrendingUp size={18} color="#c9a96e" /> Worth Splurging On
+                  <TrendingUp size={18} color="var(--teal)" /> Worth Splurging On
                 </h3>
                 {result.splurge_recommendations.map((item, i) => (
                   <p key={i} style={{ fontSize: '0.85rem', color: 'var(--text2)', marginBottom: '0.5rem' }}>✨ {item}</p>

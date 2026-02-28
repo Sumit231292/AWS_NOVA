@@ -51,7 +51,7 @@ export default function PackingPage() {
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '3rem 2rem' }}>
       <div style={{ marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-          <Package size={32} style={{ display: 'inline', marginRight: '0.75rem', color: '#4a90d9' }} />
+          <Package size={32} style={{ display: 'inline', marginRight: '0.75rem', color: 'var(--accent)' }} />
           Packing List
         </h1>
         <p style={{ color: 'var(--text2)' }}>
@@ -108,11 +108,11 @@ export default function PackingPage() {
             <div style={{
               padding: '1rem 1.5rem',
               borderRadius: '12px',
-              background: 'rgba(74,144,217,0.08)',
-              border: '1px solid rgba(74,144,217,0.25)',
+              background: 'var(--accent-glow)',
+              border: '1px solid var(--border2)',
               marginBottom: '1.5rem',
             }}>
-              <p style={{ fontSize: '0.8rem', color: '#4a90d9', marginBottom: '0.25rem' }}>🌤️ Weather Advisory</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--accent)', marginBottom: '0.25rem' }}>🌤️ Weather Advisory</p>
               <p style={{ fontSize: '0.95rem', color: 'var(--text2)' }}>{result.weather_advisory}</p>
             </div>
           )}
@@ -120,17 +120,17 @@ export default function PackingPage() {
           {/* Progress */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.5rem' }}>Your Packing List</h2>
-            <div style={{ fontSize: '0.9rem', color: '#c9a96e' }}>
+            <div style={{ fontSize: '0.9rem', color: 'var(--accent)' }}>
               {checkedCount}/{totalItems} packed
             </div>
           </div>
 
           {/* Progress bar */}
-          <div style={{ height: '6px', borderRadius: '3px', background: 'var(--deep)', marginBottom: '2rem', overflow: 'hidden' }}>
+          <div style={{ height: '6px', borderRadius: '3px', background: 'var(--bg3)', marginBottom: '2rem', overflow: 'hidden' }}>
             <div style={{
               height: '100%',
               width: `${totalItems > 0 ? (checkedCount / totalItems) * 100 : 0}%`,
-              background: 'linear-gradient(90deg, #c9a96e, #4caf7a)',
+              background: 'linear-gradient(90deg, var(--accent), var(--green))',
               borderRadius: '3px',
               transition: 'width 0.3s',
             }} />
@@ -160,21 +160,21 @@ export default function PackingPage() {
                         marginBottom: '0.25rem',
                         opacity: done ? 0.5 : 1,
                         transition: 'opacity 0.2s',
-                        background: done ? 'rgba(76,175,122,0.05)' : 'transparent',
+                        background: done ? 'var(--green2)' : 'transparent',
                       }}
                     >
                       {done
-                        ? <CheckCircle size={18} color="#4caf7a" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        : <Circle size={18} color="#c9a96e" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        ? <CheckCircle size={18} color="var(--green)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        : <Circle size={18} color="var(--accent)" style={{ flexShrink: 0, marginTop: '2px' }} />
                       }
                       <div>
                         <span style={{ fontSize: '0.9rem', textDecoration: done ? 'line-through' : 'none' }}>
                           {item.item}
                           {item.quantity && item.quantity !== '1' && (
-                            <span style={{ color: '#c9a96e', marginLeft: '0.5rem', fontSize: '0.8rem' }}>× {item.quantity}</span>
+                            <span style={{ color: 'var(--teal)', marginLeft: '0.5rem', fontSize: '0.8rem', fontFamily: "'JetBrains Mono',monospace" }}>× {item.quantity}</span>
                           )}
                           {item.essential && (
-                            <span style={{ color: '#e05a5a', marginLeft: '0.4rem', fontSize: '0.7rem' }}>★</span>
+                            <span style={{ color: 'var(--coral)', marginLeft: '0.4rem', fontSize: '0.7rem' }}>★</span>
                           )}
                         </span>
                         {item.notes && (

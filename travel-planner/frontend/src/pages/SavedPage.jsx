@@ -13,9 +13,13 @@ export default function SavedPage() {
     navigate('/itinerary')
   }
 
-  const handleDelete = (id, title) => {
-    deleteItinerary(id)
-    toast.success(`"${title}" removed from saved trips`)
+  const handleDelete = async (id, title) => {
+    try {
+      await deleteItinerary(id)
+      toast.success(`"${title}" removed from saved trips`)
+    } catch {
+      toast.error('Failed to delete — please try again')
+    }
   }
 
   if (!user) {
@@ -24,9 +28,9 @@ export default function SavedPage() {
         <div style={{ width:'72px', height:'72px', borderRadius:'20px', background:'var(--accent-glow)', border:'1px solid var(--border2)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'1.5rem' }}>
           <BookMarked size={32} color="var(--accent)" />
         </div>
-        <h2 style={{ fontSize:'1.8rem', marginBottom:'0.5rem' }}>Sign in to see your saved trips</h2>
+        <h2 style={{ fontSize:'1.8rem', marginBottom:'0.5rem' }}>Sign in to view your archive</h2>
         <p style={{ color:'var(--text2)', marginBottom:'2rem', maxWidth:'360px' }}>
-          Create a free account to save, revisit, and share your AI-generated travel itineraries.
+          Create a free account to save, revisit, and share your AI-generated travel missions.
         </p>
         <div style={{ display:'flex', gap:'0.75rem' }}>
           <button className="btn btn-primary" onClick={openSignIn}>
@@ -46,7 +50,7 @@ export default function SavedPage() {
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:'0.6rem', marginBottom:'0.35rem' }}>
             <BookMarked size={24} color="var(--accent)" />
-            <h1>Saved Trips</h1>
+            <h1>Mission Archive</h1>
           </div>
           <p>
             {savedItineraries.length === 0

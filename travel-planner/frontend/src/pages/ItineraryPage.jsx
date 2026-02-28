@@ -6,16 +6,16 @@ import { useApp } from '../context/AppContext'
 import DestinationPhotos from '../components/DestinationPhotos'
 
 const categoryColors = {
-  sightseeing: '#c9a96e',
-  food: '#e05a5a',
-  adventure: '#4caf7a',
-  culture: '#4a90d9',
-  shopping: '#9b59b6',
-  relaxation: '#e8c98a',
+  sightseeing: 'var(--accent)',
+  food: 'var(--coral)',
+  adventure: 'var(--green)',
+  culture: 'var(--teal)',
+  shopping: 'var(--purple)',
+  relaxation: 'var(--amber)',
 }
 
 function ActivityCard({ activity }) {
-  const color = categoryColors[activity.category] || '#c9a96e'
+  const color = categoryColors[activity.category] || 'var(--accent)'
   return (
     <div style={{
       display: 'flex',
@@ -57,7 +57,7 @@ function ActivityCard({ activity }) {
         <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
           {activity.description}
         </p>
-        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#c9a96e', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: 'var(--accent)', flexWrap: 'wrap' }}>
           <span><Clock size={12} style={{ display: 'inline', marginRight: '0.25rem' }} />{activity.duration}</span>
           <span><DollarSign size={12} style={{ display: 'inline', marginRight: '0.25rem' }} />{activity.cost_estimate}</span>
           {activity.tips && (
@@ -94,15 +94,15 @@ function DayCard({ day }) {
             width: '48px',
             height: '48px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(201,169,110,0.3), rgba(232,201,138,0.1))',
-            border: '1px solid rgba(201,169,110,0.4)',
+            background: 'linear-gradient(135deg, var(--accent-glow), var(--teal2))',
+            border: '1px solid var(--glass-border)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <span style={{ fontSize: '0.6rem', color: '#c9a96e', textTransform: 'uppercase' }}>Day</span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#e8c98a', lineHeight: 1 }}>{day.day}</span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--accent)', textTransform: 'uppercase', fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.1em' }}>Day</span>
+            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--teal)', lineHeight: 1 }}>{day.day}</span>
           </div>
           <div style={{ textAlign: 'left' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text)' }}>{day.title}</h3>
@@ -110,17 +110,17 @@ function DayCard({ day }) {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.85rem', color: '#c9a96e' }}>{day.daily_budget_estimate}</span>
-          {open ? <ChevronUp size={20} color="#c9a96e" /> : <ChevronDown size={20} color="#c9a96e" />}
+          <span style={{ fontSize: '0.85rem', color: 'var(--green)', fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{day.daily_budget_estimate}</span>
+          {open ? <ChevronUp size={20} color="var(--accent)" /> : <ChevronDown size={20} color="var(--accent)" />}
         </div>
       </button>
 
       {open && (
         <div style={{ marginTop: '1.5rem' }}>
-          <hr className="gold-divider" />
+          <hr className="divider" />
 
           {/* Activities */}
-          <h4 style={{ color: '#c9a96e', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+          <h4 style={{ color: 'var(--accent)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem', fontFamily: "'JetBrains Mono',monospace" }}>
             Activities
           </h4>
           {day.activities?.map((act, i) => <ActivityCard key={i} activity={act} />)}
@@ -128,7 +128,7 @@ function DayCard({ day }) {
           {/* Meals */}
           {day.meals && (
             <>
-              <h4 style={{ color: '#c9a96e', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', marginTop: '1.5rem' }}>
+              <h4 style={{ color: 'var(--accent)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem', marginTop: '1.5rem', fontFamily: "'JetBrains Mono',monospace" }}>
                 <Utensils size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />Meals
               </h4>
               <div className="grid-3" style={{ gap: '0.75rem' }}>
@@ -139,7 +139,7 @@ function DayCard({ day }) {
                     background: 'var(--activity-bg)',
                     border: '1px solid var(--activity-border)',
                   }}>
-                    <div style={{ fontSize: '0.7rem', color: '#c9a96e', textTransform: 'capitalize', marginBottom: '0.25rem' }}>{meal}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--teal)', textTransform: 'capitalize', marginBottom: '0.25rem', fontFamily: "'JetBrains Mono',monospace" }}>{meal}</div>
                     <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{info?.name}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text2)' }}>{info?.price_range}</div>
                   </div>
@@ -151,8 +151,8 @@ function DayCard({ day }) {
           {/* Logistics */}
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
             {day.accommodation && (
-              <div style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(74,144,217,0.08)', border: '1px solid rgba(74,144,217,0.2)' }}>
-                <div style={{ fontSize: '0.75rem', color: '#4a90d9', marginBottom: '0.25rem' }}>
+              <div style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', background: 'var(--accent-glow)', border: '1px solid var(--border2)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--accent)', marginBottom: '0.25rem', fontFamily: "'JetBrains Mono',monospace" }}>
                   <Bed size={12} style={{ display: 'inline', marginRight: '0.25rem' }} />Accommodation
                 </div>
                 <div style={{ fontSize: '0.9rem' }}>{day.accommodation.name}</div>
@@ -160,8 +160,8 @@ function DayCard({ day }) {
               </div>
             )}
             {day.transportation && (
-              <div style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(76,175,122,0.08)', border: '1px solid rgba(76,175,122,0.2)' }}>
-                <div style={{ fontSize: '0.75rem', color: '#4caf7a', marginBottom: '0.25rem' }}>
+              <div style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', background: 'var(--teal2)', border: '1px solid rgba(45,212,191,0.2)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--teal)', marginBottom: '0.25rem', fontFamily: "'JetBrains Mono',monospace" }}>
                   <Car size={12} style={{ display: 'inline', marginRight: '0.25rem' }} />Getting Around
                 </div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text2)', lineHeight: 1.4 }}>{day.transportation}</div>
@@ -182,11 +182,15 @@ export default function ItineraryPage() {
   const [activeTab, setActiveTab] = useState('itinerary')
   const [saved, setSaved] = useState(false)
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) { openSignIn(); return }
-    saveItinerary(itinerary, tripForm)
-    setSaved(true)
-    toast.success('Itinerary saved! View in Saved Trips.')
+    try {
+      await saveItinerary(itinerary, tripForm)
+      setSaved(true)
+      toast.success('Itinerary saved! View in Saved Trips.')
+    } catch {
+      toast.error('Failed to save — please try again')
+    }
   }
 
   useEffect(() => {
@@ -222,12 +226,12 @@ export default function ItineraryPage() {
           <div>
             <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{trip_summary?.title}</h1>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <span className="tag tag-gold">
+              <span className="tag tag-accent">
                 <MapPin size={12} />{trip_summary?.destination}
               </span>
-              <span className="tag tag-gold">📅 {trip_summary?.duration} days</span>
+              <span className="tag tag-teal">📅 {trip_summary?.duration} days</span>
               {tripForm?.travelers && (
-                <span className="tag tag-gold">👥 {tripForm.travelers} travelers</span>
+                <span className="tag tag-purple">👥 {tripForm.travelers} travelers</span>
               )}
             </div>
           </div>
@@ -251,15 +255,17 @@ export default function ItineraryPage() {
             marginTop: '1.5rem',
             padding: '1.25rem',
             borderRadius: '12px',
-            background: 'rgba(201,169,110,0.06)',
-            border: '1px solid rgba(201,169,110,0.2)',
+            background: 'var(--glass)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid var(--glass-border)',
           }}>
-            <p style={{ fontSize: '0.8rem', color: '#c9a96e', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem', fontFamily: "'JetBrains Mono',monospace" }}>
               Trip Highlights
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {trip_summary.highlights.map((h, i) => (
-                <span key={i} className="tag tag-gold">✨ {h}</span>
+                <span key={i} className="tag tag-accent">✨ {h}</span>
               ))}
             </div>
           </div>
@@ -287,11 +293,11 @@ export default function ItineraryPage() {
               flex: 1,
               padding: '0.6rem 1rem',
               borderRadius: '8px',
-              background: activeTab === t.id ? 'rgba(201,169,110,0.15)' : 'transparent',
-              color: activeTab === t.id ? '#c9a96e' : '#d4c5ae',
+              background: activeTab === t.id ? 'var(--accent-glow)' : 'transparent',
+              color: activeTab === t.id ? 'var(--accent)' : 'var(--text2)',
               fontWeight: activeTab === t.id ? 600 : 400,
               fontSize: '0.9rem',
-              border: activeTab === t.id ? '1px solid rgba(201,169,110,0.3)' : '1px solid transparent',
+              border: activeTab === t.id ? '1px solid var(--border2)' : '1px solid transparent',
               transition: 'all 0.2s',
               cursor: 'pointer',
             }}
@@ -312,7 +318,7 @@ export default function ItineraryPage() {
         <div className="grid-2">
           {Object.entries(practical_info).map(([key, val]) => (
             <div key={key} className="card">
-              <h3 style={{ fontSize: '0.85rem', color: '#c9a96e', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
+              <h3 style={{ fontSize: '0.75rem', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem', fontFamily: "'JetBrains Mono',monospace" }}>
                 {key.replace(/_/g, ' ')}
               </h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--text2)', lineHeight: 1.6 }}>{val}</p>
@@ -328,21 +334,22 @@ export default function ItineraryPage() {
               .filter(([k]) => !k.includes('total'))
               .map(([key, val]) => (
                 <div key={key} className="card">
-                  <h3 style={{ fontSize: '0.85rem', color: '#c9a96e', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+                  <h3 style={{ fontSize: '0.75rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.5rem', fontFamily: "'JetBrains Mono',monospace" }}>
                     {key.replace(/_/g, ' ')}
                   </h3>
-                  <p style={{ fontSize: '1.5rem', fontFamily: 'Playfair Display, serif', color: 'var(--text)' }}>{val}</p>
+                  <p style={{ fontSize: '1.5rem', fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: 'var(--text)' }}>{val}</p>
                 </div>
               ))}
           </div>
           {budget_breakdown.grand_total_per_person && (
             <div className="card" style={{
               textAlign: 'center',
-              background: 'rgba(201,169,110,0.08)',
-              border: '1px solid rgba(201,169,110,0.3)',
+              background: 'linear-gradient(135deg, var(--accent-glow), var(--teal2))',
+              border: '1px solid var(--glass-border)',
+              boxShadow: 'var(--neon-glow)',
             }}>
-              <p style={{ fontSize: '0.85rem', color: '#c9a96e', marginBottom: '0.5rem' }}>ESTIMATED TOTAL PER PERSON</p>
-              <p style={{ fontSize: '3rem', fontFamily: 'Playfair Display, serif', color: '#e8c98a' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--accent)', marginBottom: '0.5rem', fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.1em' }}>ESTIMATED TOTAL PER PERSON</p>
+              <p style={{ fontSize: '3rem', fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: 'var(--teal)' }}>
                 {budget_breakdown.grand_total_per_person}
               </p>
             </div>
