@@ -1,4 +1,4 @@
-# 🌍 Nova Travel — AI-Powered Travel Planner
+# 🌍 Trip Chronicles — AI-Powered Travel Planner
 
 > **Amazon Nova AI Hackathon Submission** · Freestyle Category  
 > Powered by **Amazon Nova** via **Amazon Bedrock**
@@ -7,7 +7,7 @@
 
 ## 🚀 Overview
 
-Nova Travel is an AI-powered travel planning application that uses **Amazon Nova** (via Amazon Bedrock) to generate personalized travel itineraries, smart packing lists, budget estimates, and provides an interactive AI travel concierge chatbot.
+Trip Chronicles is an AI-powered travel planning application that uses **Amazon Nova** (via Amazon Bedrock) to generate personalized travel itineraries, smart packing lists, budget estimates, and provides an interactive AI travel concierge chatbot.
 
 ### Architecture
 ```

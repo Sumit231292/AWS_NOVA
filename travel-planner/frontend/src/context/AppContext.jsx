@@ -17,19 +17,19 @@ const AppContext = createContext()
 
 export function AppProvider({ children }) {
   // ── Theme ──────────────────────────────────────────────────────────────────
-  const [theme, setTheme] = useState(() => localStorage.getItem('roamly-theme') || 'dark')
+  const [theme, setTheme] = useState(() => localStorage.getItem('tripchronicles-theme') || 'dark')
 
   // ── User state ─────────────────────────────────────────────────────────────
   const [user, setUser] = useState(() => {
     if (COGNITO_ENABLED) return null   // Will be set after session check
-    try { return JSON.parse(localStorage.getItem('roamly-user')) } catch { return null }
+    try { return JSON.parse(localStorage.getItem('tripchronicles-user')) } catch { return null }
   })
   const [userLoading, setUserLoading] = useState(COGNITO_ENABLED) // true while checking Cognito session
 
   // ── Saved itineraries ──────────────────────────────────────────────────────
   const [savedItineraries, setSavedItineraries] = useState(() => {
     if (COGNITO_ENABLED) return []
-    try { return JSON.parse(localStorage.getItem('roamly-itineraries')) || [] } catch { return [] }
+    try { return JSON.parse(localStorage.getItem('tripchronicles-itineraries')) || [] } catch { return [] }
   })
 
   // ── Auth modal state ───────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ export function AppProvider({ children }) {
 
   // ── Theme toggle ───────────────────────────────────────────────────────────
   useEffect(() => {
-    localStorage.setItem('roamly-theme', theme)
+    localStorage.setItem('tripchronicles-theme', theme)
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
@@ -106,7 +106,7 @@ export function AppProvider({ children }) {
     if (!COGNITO_ENABLED) {
       const u = { email, name: email.split('@')[0], avatar: email[0].toUpperCase(), joinedAt: new Date().toISOString() }
       setUser(u)
-      localStorage.setItem('roamly-user', JSON.stringify(u))
+      localStorage.setItem('tripchronicles-user', JSON.stringify(u))
       setShowAuthModal(false)
       return { success: true }
     }
@@ -126,7 +126,7 @@ export function AppProvider({ children }) {
     if (!COGNITO_ENABLED) {
       const u = { email, name, avatar: name[0].toUpperCase(), joinedAt: new Date().toISOString() }
       setUser(u)
-      localStorage.setItem('roamly-user', JSON.stringify(u))
+      localStorage.setItem('tripchronicles-user', JSON.stringify(u))
       setShowAuthModal(false)
       return { success: true, confirmed: true }
     }
@@ -153,7 +153,7 @@ export function AppProvider({ children }) {
     if (!COGNITO_ENABLED) {
       const u = { email: `demo@${provider.toLowerCase()}.com`, name: `${provider} User`, avatar: provider[0].toUpperCase(), provider: provider.toLowerCase() }
       setUser(u)
-      localStorage.setItem('roamly-user', JSON.stringify(u))
+      localStorage.setItem('tripchronicles-user', JSON.stringify(u))
       setShowAuthModal(false)
       return
     }
@@ -171,8 +171,8 @@ export function AppProvider({ children }) {
     }
     setUser(null)
     setSavedItineraries([])
-    localStorage.removeItem('roamly-user')
-    localStorage.removeItem('roamly-itineraries')
+    localStorage.removeItem('tripchronicles-user')
+    localStorage.removeItem('tripchronicles-itineraries')
   }
 
   // ── Itinerary: Save ────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ export function AppProvider({ children }) {
     const local = { id: Date.now().toString(), savedAt: new Date().toISOString(), ...entry }
     const updated = [local, ...savedItineraries].slice(0, 20)
     setSavedItineraries(updated)
-    localStorage.setItem('roamly-itineraries', JSON.stringify(updated))
+    localStorage.setItem('tripchronicles-itineraries', JSON.stringify(updated))
     return local.id
   }
 
@@ -211,7 +211,7 @@ export function AppProvider({ children }) {
     }
     const updated = savedItineraries.filter(i => i.id !== id)
     setSavedItineraries(updated)
-    localStorage.setItem('roamly-itineraries', JSON.stringify(updated))
+    localStorage.setItem('tripchronicles-itineraries', JSON.stringify(updated))
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

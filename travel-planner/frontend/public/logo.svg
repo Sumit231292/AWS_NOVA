@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="page" x1="20" y1="16" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Open book / chronicle -->
+  <path d="M16 18 C16 16, 18 14, 20 14 L30 14 C31 14, 32 15, 32 16 L32 46 C32 45, 31 44, 30 44 L20 44 C18 44, 16 42, 16 40 Z" fill="url(#page)" opacity="0.95"/>
+  <path d="M48 18 C48 16, 46 14, 44 14 L34 14 C33 14, 32 15, 32 16 L32 46 C32 45, 33 44, 34 44 L44 44 C46 44, 48 42, 48 40 Z" fill="url(#page)" opacity="0.85"/>
+  <!-- Spine -->
+  <line x1="32" y1="14" x2="32" y2="46" stroke="#38bdf8" stroke-width="1.5" opacity="0.4"/>
+  <!-- Map pin on book -->
+  <circle cx="40" cy="26" r="4" fill="#38bdf8" opacity="0.9"/>
+  <circle cx="40" cy="26" r="1.8" fill="#ffffff"/>
+  <path d="M40 30 L40 34" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <!-- Dotted route line on left page -->
+  <line x1="20" y1="22" x2="28" y2="22" stroke="#0ea5e9" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.5"/>
+  <line x1="20" y1="28" x2="28" y2="28" stroke="#0ea5e9" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.5"/>
+  <line x1="20" y1="34" x2="26" y2="34" stroke="#0ea5e9" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.5"/>
+  <!-- Compass rose accent -->
+  <circle cx="24" cy="38" r="2.5" stroke="#0ea5e9" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <line x1="24" y1="35.5" x2="24" y2="40.5" stroke="#0ea5e9" stroke-width="0.6" opacity="0.4"/>
+  <line x1="21.5" y1="38" x2="26.5" y2="38" stroke="#0ea5e9" stroke-width="0.6" opacity="0.4"/>
+</svg>

@@ -1,9 +1,14 @@
 import { useState } from 'react'
-import { Package, CheckCircle, Circle, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Package, CheckCircle, Circle, Loader2, ArrowLeft } from 'lucide-react'
 import { travelAPI } from '../services/api'
+import { useApp } from '../context/AppContext'
+import { PackingListSkeleton } from '../components/Skeleton'
 import toast from 'react-hot-toast'
 
 export default function PackingPage() {
+  const navigate = useNavigate()
+  const { theme } = useApp()
   const [form, setForm] = useState({ destination: '', start_date: '', end_date: '', activities: [] })
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -50,6 +55,9 @@ export default function PackingPage() {
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '3rem 2rem' }}>
       <div style={{ marginBottom: '2.5rem' }}>
+        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/plan')} style={{ marginBottom: '1rem' }}>
+          <ArrowLeft size={15}/> Back to Planner
+        </button>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
           <Package size={32} style={{ display: 'inline', marginRight: '0.75rem', color: 'var(--accent)' }} />
           Packing List
@@ -76,12 +84,12 @@ export default function PackingPage() {
         <div className="grid-2" style={{ marginBottom: '1rem' }}>
           <div className="form-group">
             <label className="form-label">Start Date *</label>
-            <input type="date" className="form-input" style={{ colorScheme: 'dark' }}
+            <input type="date" className="form-input" style={{ colorScheme: theme }}
               value={form.start_date} onChange={e => set('start_date', e.target.value)} required />
           </div>
           <div className="form-group">
             <label className="form-label">End Date *</label>
-            <input type="date" className="form-input" style={{ colorScheme: 'dark' }}
+            <input type="date" className="form-input" style={{ colorScheme: theme }}
               value={form.end_date} onChange={e => set('end_date', e.target.value)} required />
           </div>
         </div>
@@ -100,6 +108,8 @@ export default function PackingPage() {
           {loading ? <><div className="spinner" /> Generating...</> : <><Package size={18} /> Generate Packing List</>}
         </button>
       </form>
+
+      {loading && !result && <PackingListSkeleton />}
 
       {result && (
         <div style={{ animation: 'fadeUp 0.5s ease' }}>

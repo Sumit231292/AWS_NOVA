@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Compass, Map, Package, DollarSign, MessageCircle, Zap, ArrowRight, Star, Globe, BookMarked, Shield, Cpu, Sparkles, Radio, ChevronRight, Terminal, Layers, Brain } from 'lucide-react'
+import { BookOpen, Map, Package, DollarSign, MessageCircle, Zap, ArrowRight, Star, Globe, BookMarked, Shield, Cpu, Sparkles, Radio, ChevronRight, Terminal, Layers, Brain } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 const features = [
@@ -33,11 +34,42 @@ export default function HomePage() {
     <div style={{ overflow: 'hidden' }}>
       {/*  HERO  */}
       <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6rem 1.5rem 4rem' }}>
-        {/* Animated orbs */}
+        {/* Travel-themed background collage */}
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: '-15%', right: '10%', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)', animation: 'float 12s ease-in-out infinite' }} />
-          <div style={{ position: 'absolute', bottom: '-5%', left: '-10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,211,238,0.08) 0%, transparent 70%)', animation: 'float 10s ease-in-out infinite reverse' }} />
-          <div style={{ position: 'absolute', top: '50%', left: '60%', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.06) 0%, transparent 70%)', animation: 'float 14s ease-in-out infinite' }} />
+          {/* Subtle travel hero image */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: 'url(https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&q=60)',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            opacity: 0.07,
+            filter: 'blur(1px)',
+          }} />
+          {/* Warm gradient overlay for travel vibes */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(251,191,36,0.06) 25%, rgba(251,113,133,0.05) 50%, rgba(45,212,191,0.06) 75%, rgba(167,139,250,0.08) 100%)',
+          }} />
+          {/* Animated travel orbs with warm tones */}
+          <div style={{ position: 'absolute', top: '-10%', right: '5%', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.1) 0%, transparent 70%)', animation: 'float 12s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', bottom: '0%', left: '-5%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,113,133,0.08) 0%, transparent 70%)', animation: 'float 10s ease-in-out infinite reverse' }} />
+          <div style={{ position: 'absolute', top: '40%', left: '55%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(45,212,191,0.07) 0%, transparent 70%)', animation: 'float 14s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', top: '15%', left: '10%', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%)', animation: 'float 16s ease-in-out infinite' }} />
+          {/* Floating travel emoji particles */}
+          {['✈️','🌍','🏖️','🗺️','⛰️','🌅','🧳','🏛️'].map((emoji, i) => (
+            <div key={i} style={{
+              position: 'absolute',
+              fontSize: `${1.2 + (i % 3) * 0.5}rem`,
+              opacity: 0.12 + (i % 4) * 0.03,
+              top: `${10 + (i * 11) % 80}%`,
+              left: `${5 + (i * 13) % 90}%`,
+              animation: `float ${10 + i * 2}s ease-in-out infinite`,
+              animationDelay: `${i * 1.5}s`,
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}>
+              {emoji}
+            </div>
+          ))}
         </div>
 
         {/* Hero grid overlay */}
@@ -58,17 +90,17 @@ export default function HomePage() {
 
           {/* Subtitle */}
           <p className="fade-up" style={{ fontSize: '1.15rem', color: 'var(--text2)', maxWidth: '580px', margin: '0 auto 2.8rem', lineHeight: 1.7, animationDelay: '0.12s' }}>
-            NovaTrek uses <strong style={{ color: 'var(--text)' }}>Amazon Nova</strong> to generate hyper-personalized itineraries, smart packing lists, and real-time travel intelligence — all in seconds.
+            Trip Chronicles uses <strong style={{ color: 'var(--text)' }}>Amazon Nova</strong> to generate hyper-personalized itineraries, smart packing lists, and real-time travel intelligence — all in seconds.
           </p>
 
           {/* CTA buttons */}
           <div className="fade-up" style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap', animationDelay: '0.18s' }}>
             <button className="btn btn-primary" onClick={() => navigate('/plan')} style={{ fontSize: '0.96rem', padding: '0.85rem 2.2rem' }}>
-              <Compass size={18} /> Launch Mission
+              <BookOpen size={18} /> Start Your Chronicle
             </button>
             {!user && (
               <button className="btn btn-ghost" onClick={openSignUp} style={{ fontSize: '0.96rem', padding: '0.85rem 2.2rem' }}>
-                <BookMarked size={18} /> Save Missions
+                <BookMarked size={18} /> Save Chronicles
               </button>
             )}
           </div>
@@ -144,11 +176,13 @@ export default function HomePage() {
               style={{ cursor: 'pointer', padding: 0, overflow: 'hidden' }}
             >
               <div style={{ position: 'relative', aspectRatio: '16/10', overflow: 'hidden', background: 'var(--bg2)' }}>
+                {/* Shimmer placeholder while image loads */}
+                <div className="shimmer" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
                 <img
                   src={img}
                   alt={name}
                   loading="lazy"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)', position: 'relative', zIndex: 1 }}
                   onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
                   onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                   onError={e => { e.currentTarget.style.display='none'; e.currentTarget.parentElement.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:2.5rem;background:var(--bg3)"></div>` }}
@@ -189,7 +223,7 @@ export default function HomePage() {
             border: '1px solid var(--border2)',
             boxShadow: 'var(--shadow-glow)',
           }}>
-            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.3rem)', marginBottom: '0.8rem', letterSpacing: '-0.01em' }}>Save your missions — sign up free</h2>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.3rem)', marginBottom: '0.8rem', letterSpacing: '-0.01em' }}>Save your chronicles — sign up free</h2>
             <p style={{ color: 'var(--text2)', marginBottom: '2rem', maxWidth: '420px', margin: '0 auto 2rem' }}>
               Create a free account to save, revisit, and share your AI-generated travel intelligence anytime.
             </p>

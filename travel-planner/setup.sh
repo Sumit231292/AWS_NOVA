@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🌍 Nova Travel — AI Travel Planner Setup"
+echo "🌍 Trip Chronicles — AI Travel Planner Setup"
 echo "========================================="
 echo ""
 

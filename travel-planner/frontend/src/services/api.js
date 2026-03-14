@@ -46,6 +46,10 @@ export const travelAPI = {
   getQuickTips: (destination, category = 'general') =>
     api.post(`/plan/quick-tips?destination=${encodeURIComponent(destination)}&category=${category}`),
 
+  /** Fetch destination photos (Wikipedia / Wikimedia Commons) */
+  getDestinationPhotos: (destination) =>
+    api.get(`/destination-photos?destination=${encodeURIComponent(destination)}`),
+
   /** Health check */
   health: () => api.get('/health'),
 

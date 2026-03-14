@@ -1,4 +1,4 @@
-# 🌍 Roamly — AI-Powered Travel Planner
+# 🌍 Trip Chronicles — AI-Powered Travel Planner
 
 > **Amazon Nova AI Hackathon 2026** · Freestyle Category  
 > Powered by **Amazon Nova** via **Amazon Bedrock** · Auth by **AWS Cognito** · Storage by **DynamoDB**
@@ -7,7 +7,7 @@
 
 ## 🚀 Overview
 
-Roamly is a full-stack AI travel planner that uses **Amazon Nova Lite** (via Amazon Bedrock) to generate hyper-personalized itineraries, smart packing lists, budget estimates, and an interactive AI concierge — all secured with **AWS Cognito** authentication and stored in **DynamoDB**.
+Trip Chronicles is a full-stack AI travel planner that uses **Amazon Nova Lite** (via Amazon Bedrock) to generate hyper-personalized itineraries, smart packing lists, budget estimates, and an interactive AI concierge — all secured with **AWS Cognito** authentication and stored in **DynamoDB**.
 
 ### Architecture
 ```
@@ -123,7 +123,7 @@ COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
 COGNITO_APP_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # DynamoDB table (auto-created on startup)
-DYNAMODB_TABLE=roamly-trips
+DYNAMODB_TABLE=tripchronicles-trips
 ```
 
 ### Frontend Environment (`frontend/.env`)
@@ -158,7 +158,7 @@ VITE_COGNITO_DOMAIN=your-app.auth.us-east-1.amazoncognito.com
         "dynamodb:DescribeTable",
         "dynamodb:ListTables"
       ],
-      "Resource": "arn:aws:dynamodb:*:*:table/roamly-trips"
+      "Resource": "arn:aws:dynamodb:*:*:table/tripchronicles-trips"
     }
   ]
 }

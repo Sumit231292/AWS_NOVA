@@ -65,11 +65,19 @@ export default function SavedPage() {
 
       {savedItineraries.length === 0 ? (
         <div className="card" style={{ textAlign:'center', padding:'4rem 2rem' }}>
-          <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>🗺️</div>
+          {/* Travel illustration */}
+          <div style={{ marginBottom: '1.5rem', position: 'relative', display: 'inline-block' }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: '0.5rem', animation: 'float 6s ease-in-out infinite' }}>🗺️</div>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', fontSize: '1.5rem', opacity: 0.5 }}>
+              <span style={{ animation: 'float 4s ease-in-out infinite', animationDelay: '0.5s' }}>✈️</span>
+              <span style={{ animation: 'float 5s ease-in-out infinite', animationDelay: '1s' }}>🏖️</span>
+              <span style={{ animation: 'float 4.5s ease-in-out infinite', animationDelay: '1.5s' }}>⛰️</span>
+            </div>
+          </div>
           <h3 style={{ marginBottom:'0.5rem' }}>No trips saved yet</h3>
-          <p style={{ color:'var(--text2)', marginBottom:'1.5rem' }}>Generate an itinerary and click "Save Trip" to keep it here.</p>
+          <p style={{ color:'var(--text2)', marginBottom:'1.5rem', maxWidth:'360px', margin:'0 auto 1.5rem' }}>Plan an amazing adventure and save your AI-generated itinerary to access it anytime.</p>
           <button className="btn btn-primary" onClick={() => navigate('/plan')}>
-            Start Planning
+            <Plus size={16}/> Start Planning
           </button>
         </div>
       ) : (

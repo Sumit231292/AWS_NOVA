@@ -4,6 +4,8 @@ import { MapPin, Clock, DollarSign, Utensils, Bed, Car, ChevronDown, ChevronUp, 
 import toast from 'react-hot-toast'
 import { useApp } from '../context/AppContext'
 import DestinationPhotos from '../components/DestinationPhotos'
+import BookingLinks from '../components/BookingLinks'
+import { ItinerarySkeleton } from '../components/Skeleton'
 
 const categoryColors = {
   sightseeing: 'var(--accent)',
@@ -202,12 +204,7 @@ export default function ItineraryPage() {
   }, [])
 
   if (!itinerary) {
-    return (
-      <div style={{ textAlign: 'center', padding: '5rem 2rem' }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto 1rem' }} />
-        <p style={{ color: 'var(--text2)' }}>Loading your itinerary...</p>
-      </div>
-    )
+    return <ItinerarySkeleton />
   }
 
   const { trip_summary, daily_itinerary, practical_info, budget_breakdown } = itinerary
@@ -274,6 +271,15 @@ export default function ItineraryPage() {
 
       {/* Destination Photos */}
       <DestinationPhotos destination={tripForm?.destination || trip_summary?.destination} />
+
+      {/* Book Your Trip — real booking links */}
+      <BookingLinks
+        destination={tripForm?.destination || trip_summary?.destination}
+        origin={tripForm?.origin}
+        startDate={tripForm?.start_date}
+        endDate={tripForm?.end_date}
+        travelers={tripForm?.travelers}
+      />
 
       {/* Tabs */}
       <div style={{

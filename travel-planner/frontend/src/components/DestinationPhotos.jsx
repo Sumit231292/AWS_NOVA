@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Camera, ChevronLeft, ChevronRight } from 'lucide-react'
+import { travelAPI } from '../services/api'
 
 /**
- * DestinationPhotos — Reliable destination images via Unsplash CDN
- * No API key needed. Direct CDN links that always work.
+ * DestinationPhotos — Curated Unsplash photos for popular cities,
+ * with a dynamic Wikipedia / Wikimedia Commons fallback for any destination.
  */
 
 const DESTINATION_PHOTOS = {
@@ -154,22 +155,43 @@ const FALLBACK_PHOTOS = [
   { id: 'fb4', src: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&h=560&fit=crop&q=80', alt: 'Road trip' },
 ]
 
-function getPhotos(destination) {
+function getCuratedPhotos(destination) {
   const lower = (destination || '').toLowerCase()
   for (const [key, photos] of Object.entries(DESTINATION_PHOTOS)) {
     if (lower.includes(key)) return photos
   }
-  return FALLBACK_PHOTOS
+  return null // no curated match — will trigger dynamic fetch
 }
 
 export default function DestinationPhotos({ destination }) {
-  const [photos] = useState(() => getPhotos(destination))
+  const [photos, setPhotos] = useState(() => getCuratedPhotos(destination) || [])
+  const [loading, setLoading] = useState(() => !getCuratedPhotos(destination))
   const [current, setCurrent] = useState(0)
   const [loaded, setLoaded] = useState({})
   const [errored, setErrored] = useState({})
   const timerRef = useRef(null)
 
+  // Dynamic fetch for uncurated destinations
   useEffect(() => {
+    if (!destination || getCuratedPhotos(destination)) return
+    let cancelled = false
+    setLoading(true)
+    travelAPI.getDestinationPhotos(destination)
+      .then(res => {
+        if (cancelled) return
+        const fetched = res.photos || []
+        setPhotos(fetched.length ? fetched : FALLBACK_PHOTOS)
+        setCurrent(0)
+      })
+      .catch(() => {
+        if (!cancelled) setPhotos(FALLBACK_PHOTOS)
+      })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [destination])
+
+  useEffect(() => {
+    if (!photos.length) return
     timerRef.current = setInterval(() => {
       setCurrent(c => (c + 1) % photos.length)
     }, 5000)
@@ -181,8 +203,30 @@ export default function DestinationPhotos({ destination }) {
     setCurrent(c => (c + dir + photos.length) % photos.length)
   }
 
-  if (!destination || !photos.length) return null
+  if (!destination) return null
   const city = destination.split(',')[0].trim()
+
+  // Shimmer loading skeleton while fetching dynamic photos
+  if (loading) {
+    return (
+      <div style={{ marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.6rem' }}>
+          <Camera size={14} color="var(--accent)" />
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+            {city} — Loading photos…
+          </span>
+        </div>
+        <div className="shimmer" style={{ width: '100%', aspectRatio: '16/9', borderRadius: '14px' }} />
+        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem' }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} className="shimmer" style={{ flex: 1, aspectRatio: '16/9', borderRadius: '8px' }} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (!photos.length) return null
 
   return (
     <div style={{ marginBottom: '1.75rem' }}>

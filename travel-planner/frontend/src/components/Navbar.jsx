@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Compass, Map, Package, DollarSign, MessageCircle, Menu, X, Sun, Moon, BookMarked, LogOut, ChevronDown } from 'lucide-react'
+import { BookOpen, Map, Package, DollarSign, MessageCircle, Menu, X, Sun, Moon, BookMarked, LogOut, ChevronDown } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 const navLinks = [
@@ -24,14 +24,14 @@ export default function Navbar() {
         
         <Link to="/" style={{ display:'flex', alignItems:'center', gap:'0.55rem', textDecoration:'none' }}>
           <div style={{ width:'34px', height:'34px', borderRadius:'10px', background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 12px var(--accent-glow)' }}>
-            <Compass size={18} color="#fff" />
+            <BookOpen size={18} color="#fff" />
           </div>
           <span style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1.2rem', color:'var(--text)', letterSpacing:'-0.02em' }}>
-            Nova<span style={{ color:'var(--accent)' }}>Trek</span>
+            Trip<span style={{ color:'var(--accent)' }}>Chronicles</span>
           </span>
         </Link>
 
-        <div style={{ display:'flex', alignItems:'center', gap:'0.1rem' }}>
+        <div id="desktop-nav" style={{ display:'flex', alignItems:'center', gap:'0.1rem' }}>
           {navLinks.map(({ to, label, icon: Icon }) => {
             const active = location.pathname === to
             return (
@@ -43,8 +43,8 @@ export default function Navbar() {
           })}
         </div>
 
-        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
-          <div style={{ padding:'0.28rem 0.65rem', borderRadius:'6px', background:'rgba(255,153,0,0.1)', border:'1px solid rgba(255,153,0,0.25)', fontSize:'0.68rem', color:'#ff9900', fontWeight:700 }}>⚡ AWS Nova</div>
+        <div id="desktop-actions" style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+          <div className="aws-badge" style={{ padding:'0.28rem 0.65rem', borderRadius:'6px', background:'rgba(255,153,0,0.1)', border:'1px solid rgba(255,153,0,0.25)', fontSize:'0.68rem', color:'#ff9900', fontWeight:700 }}>⚡ AWS Nova</div>
           
           <button className="btn-icon" onClick={toggleTheme} title="Toggle theme">
             {isDark ? <Sun size={16} color="var(--amber)" /> : <Moon size={16} color="var(--accent)" />}
@@ -54,7 +54,7 @@ export default function Navbar() {
             <div style={{ position:'relative' }}>
               <button onClick={() => setUserMenuOpen(!userMenuOpen)} style={{ display:'flex', alignItems:'center', gap:'0.45rem', padding:'0.35rem 0.75rem', borderRadius:'50px', background:'var(--card2)', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.86rem', fontWeight:500 }}>
                 <div style={{ width:'26px', height:'26px', borderRadius:'50%', background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.72rem', fontWeight:700, color:'#fff' }}>{user.avatar}</div>
-                {user.name.split(' ')[0]}
+                <span className="user-name-text">{user.name.split(' ')[0]}</span>
                 <ChevronDown size={13} color="var(--text2)" />
               </button>
               {userMenuOpen && (
@@ -79,7 +79,7 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <div style={{ display:'flex', gap:'0.4rem' }}>
+            <div className="auth-btns" style={{ display:'flex', gap:'0.4rem' }}>
               <button className="btn btn-ghost btn-sm" onClick={openSignIn}>Sign In</button>
               <button className="btn btn-primary btn-sm" onClick={openSignUp}>Sign Up</button>
             </div>
@@ -98,9 +98,25 @@ export default function Navbar() {
               <Icon size={16}/> {label}
             </Link>
           ))}
+          {!user && (
+            <div style={{ display:'flex', gap:'0.5rem', marginTop:'0.5rem', padding:'0.5rem 1rem' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => { openSignIn(); setMobileOpen(false) }} style={{ flex:1 }}>Sign In</button>
+              <button className="btn btn-primary btn-sm" onClick={() => { openSignUp(); setMobileOpen(false) }} style={{ flex:1 }}>Sign Up</button>
+            </div>
+          )}
         </div>
       )}
-      <style>{`@media(max-width:900px){#mob-btn{display:flex!important;}}`}</style>
+      <style>{`
+        @media(max-width:900px){
+          #mob-btn{display:flex!important;}
+          #desktop-nav{display:none!important;}
+          #desktop-actions .aws-badge{display:none!important;}
+        }
+        @media(max-width:480px){
+          #desktop-actions .auth-btns{display:none!important;}
+          #desktop-actions .user-name-text{display:none!important;}
+        }
+      `}</style>
     </nav>
   )
 }

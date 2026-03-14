@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Plane, Calendar, Users, DollarSign, Heart, ChevronRight, Loader2 } from 'lucide-react'
 import { travelAPI } from '../services/api'
+import { useApp } from '../context/AppContext'
 import toast from 'react-hot-toast'
 
 const interests = [
@@ -27,6 +28,7 @@ export default function PlannerPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
+  const { theme } = useApp()
 
   const [form, setForm] = useState({
     destination: searchParams.get('destination') || '',
@@ -135,7 +137,7 @@ export default function PlannerPage() {
                 value={form.start_date}
                 onChange={e => set('start_date', e.target.value)}
                 required
-                style={{ colorScheme: 'dark' }}
+                style={{ colorScheme: theme }}
               />
             </div>
             <div className="form-group">
@@ -147,7 +149,7 @@ export default function PlannerPage() {
                 value={form.end_date}
                 onChange={e => set('end_date', e.target.value)}
                 required
-                style={{ colorScheme: 'dark' }}
+                style={{ colorScheme: theme }}
               />
             </div>
             <div className="form-group">
@@ -265,11 +267,11 @@ export default function PlannerPage() {
             {loading ? (
               <>
                 <div className="spinner" />
-                Nova is generating your mission...
+                Nova is crafting your chronicle...
               </>
             ) : (
               <>
-                Generate Mission Briefing
+                Generate My Chronicle
                 <ChevronRight size={20} />
               </>
             )}

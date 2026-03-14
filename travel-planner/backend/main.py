@@ -3,9 +3,9 @@ AI Travel Planner - Backend API
 Uses Amazon Nova (via Amazon Bedrock) for intelligent travel planning
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List
 import boto3
@@ -15,17 +15,27 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from functools import lru_cache
+import httpx
 import urllib.request
 from dotenv import load_dotenv
 from jose import jwt, JWTError
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 load_dotenv()  # Load .env file before boto3 client is created
 
+# ─── Rate Limiter ─────────────────────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
-    title="AI Travel Planner API",
+    title="Trip Chronicles API",
     description="Powered by Amazon Nova via Amazon Bedrock",
     version="1.0.0"
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -57,7 +67,7 @@ COGNITO_ISSUER = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{COGNITO_U
 
 # ─── DynamoDB for Persistent Saved Trips ──────────────────────────────────────
 
-DYNAMODB_TABLE = os.getenv("DYNAMODB_TABLE", "roamly-trips")
+DYNAMODB_TABLE = os.getenv("DYNAMODB_TABLE", "tripchronicles-trips")
 dynamodb_resource = boto3.resource(
     "dynamodb",
     region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
@@ -218,7 +228,7 @@ def call_nova_stream(system_prompt: str, user_message: str, max_tokens: int = 20
 
 @app.get("/")
 def root():
-    return {"message": "AI Travel Planner API — Powered by Amazon Nova", "status": "running"}
+    return {"message": "Trip Chronicles API — Powered by Amazon Nova", "status": "running"}
 
 
 @app.get("/health")
@@ -226,8 +236,128 @@ def health():
     return {"status": "healthy", "model": MODEL_ID, "timestamp": datetime.utcnow().isoformat()}
 
 
+# ─── Destination Photos (Wikipedia + Wikimedia Commons) ─────────────────────
+_photo_cache: dict = {}
+_WIKI_UA = "TripChronicles/1.0 (https://github.com/Sumit231292/AWS_NOVA)"
+_SKIP = {"logo", "flag", "coat", "arms", "emblem", "icon", "symbol", "map", "seal",
+         "diagram", "signature", "medal", "badge", "chart", "commons-logo", "location",
+         "locator", "wikidata", "edit-clear", "ambox", "question_book", "padlock"}
+
+@app.get("/api/destination-photos")
+async def get_destination_photos(destination: str):
+    """Fetch real destination photos from Wikipedia / Wikimedia Commons — no API key needed."""
+    cache_key = destination.strip().lower()
+    if cache_key in _photo_cache:
+        return {"photos": _photo_cache[cache_key]}
+
+    photos: list = []
+    headers = {"User-Agent": _WIKI_UA}
+
+    async with httpx.AsyncClient(timeout=12, follow_redirects=True) as client:
+        # 1) Wikipedia main page image (hero shot)
+        try:
+            resp = await client.get(
+                "https://en.wikipedia.org/w/api.php",
+                params={"action": "query", "titles": destination, "prop": "pageimages",
+                        "pithumbsize": 900, "format": "json"},
+                headers=headers,
+            )
+            if resp.status_code == 200:
+                pages = resp.json().get("query", {}).get("pages", {})
+                for pg in pages.values():
+                    thumb = pg.get("thumbnail", {}).get("source")
+                    title = pg.get("pageimage", destination)
+                    if thumb:
+                        photos.append({"id": "wiki_hero", "src": thumb,
+                                       "alt": title.replace("_", " ").rsplit(".", 1)[0]})
+                        break
+        except Exception:
+            pass
+
+        # 2) Wikipedia page images — get real jpg photos from the article
+        try:
+            resp = await client.get(
+                "https://en.wikipedia.org/w/api.php",
+                params={"action": "query", "titles": destination, "prop": "images",
+                        "imlimit": 20, "format": "json"},
+                headers=headers,
+            )
+            if resp.status_code == 200:
+                pages = resp.json().get("query", {}).get("pages", {})
+                img_titles = []
+                for pg in pages.values():
+                    for img in pg.get("images", []):
+                        t = img["title"]
+                        tl = t.lower()
+                        if not tl.endswith((".jpg", ".jpeg")):
+                            continue
+                        if any(s in tl for s in _SKIP):
+                            continue
+                        img_titles.append(t)
+                # Resolve image titles to actual URLs (batch)
+                if img_titles:
+                    resp2 = await client.get(
+                        "https://en.wikipedia.org/w/api.php",
+                        params={"action": "query", "titles": "|".join(img_titles[:8]),
+                                "prop": "imageinfo", "iiprop": "url",
+                                "iiurlwidth": 900, "format": "json"},
+                        headers=headers,
+                    )
+                    if resp2.status_code == 200:
+                        img_pages = resp2.json().get("query", {}).get("pages", {})
+                        for ip in img_pages.values():
+                            if len(photos) >= 6:
+                                break
+                            ii = ip.get("imageinfo", [{}])[0]
+                            url = ii.get("thumburl") or ii.get("url", "")
+                            if not url:
+                                continue
+                            alt = (ip.get("title", "")
+                                   .replace("File:", "").replace("_", " ")
+                                   .rsplit(".", 1)[0][:80])
+                            if not any(p["src"] == url for p in photos):
+                                photos.append({"id": f"wp_{ip.get('pageid','')}", "src": url, "alt": alt})
+        except Exception:
+            pass
+
+        # 3) Fallback: Wikimedia Commons search (if we still have fewer than 3 photos)
+        if len(photos) < 3:
+            try:
+                resp = await client.get(
+                    "https://commons.wikimedia.org/w/api.php",
+                    params={"action": "query", "generator": "search",
+                            "gsrsearch": destination, "gsrnamespace": 6,
+                            "gsrlimit": 10, "prop": "imageinfo",
+                            "iiprop": "url", "iiurlwidth": 900, "format": "json"},
+                    headers=headers,
+                )
+                if resp.status_code == 200:
+                    pages = resp.json().get("query", {}).get("pages", {})
+                    for page in pages.values():
+                        if len(photos) >= 6:
+                            break
+                        title = page.get("title", "").lower()
+                        if any(s in title for s in _SKIP):
+                            continue
+                        if not any(title.endswith(ext) for ext in (".jpg", ".jpeg")):
+                            continue
+                        ii = page.get("imageinfo", [{}])[0]
+                        thumb = ii.get("thumburl", "")
+                        if thumb and not any(p["src"] == thumb for p in photos):
+                            alt = (page.get("title", "")
+                                   .replace("File:", "").replace("_", " ")
+                                   .rsplit(".", 1)[0][:80])
+                            photos.append({"id": f"cm_{page.get('pageid','')}", "src": thumb, "alt": alt})
+            except Exception:
+                pass
+
+    _photo_cache[cache_key] = photos
+    return {"photos": photos}
+
+
 @app.post("/api/plan/full")
-async def generate_full_itinerary(req: TripRequest):
+@limiter.limit("5/minute")
+async def generate_full_itinerary(req: TripRequest, request: Request):
     """Generate a complete multi-day travel itinerary using Amazon Nova."""
     interests_str = ", ".join(req.interests) if req.interests else "general sightseeing"
     duration = (datetime.fromisoformat(req.end_date) - datetime.fromisoformat(req.start_date)).days + 1
@@ -320,7 +450,8 @@ Generate all {duration} days. Make it genuinely helpful and specific to {req.des
 
 
 @app.post("/api/plan/packing-list")
-async def generate_packing_list(req: PackingRequest):
+@limiter.limit("10/minute")
+async def generate_packing_list(req: PackingRequest, request: Request):
     """Generate a smart packing list using Amazon Nova."""
     duration = (datetime.fromisoformat(req.end_date) - datetime.fromisoformat(req.start_date)).days + 1
     activities_str = ", ".join(req.activities) if req.activities else "general travel"
@@ -359,7 +490,8 @@ Return JSON:
 
 
 @app.post("/api/plan/budget")
-async def estimate_budget(req: BudgetRequest):
+@limiter.limit("10/minute")
+async def estimate_budget(req: BudgetRequest, request: Request):
     """Generate a detailed budget estimate using Amazon Nova."""
     system_prompt = "You are a travel budget expert. Return only valid JSON."
 
@@ -397,7 +529,8 @@ Return JSON:
 
 
 @app.post("/api/chat")
-async def chat_with_travel_ai(req: ChatRequest):
+@limiter.limit("15/minute")
+async def chat_with_travel_ai(req: ChatRequest, request: Request):
     """Multi-turn chat with the AI travel assistant using Amazon Nova."""
     system_prompt = """You are Nova, an expert AI travel assistant powered by Amazon Nova.
 You help travelers plan amazing trips with personalized, detailed advice.
@@ -453,7 +586,8 @@ Keep responses conversational but informative."""
 
 
 @app.post("/api/plan/quick-tips")
-async def get_quick_tips(destination: str, category: str = "general"):
+@limiter.limit("15/minute")
+async def get_quick_tips(destination: str, category: str = "general", request: Request = None):
     """Get quick travel tips for a destination."""
     system_prompt = "You are a travel expert. Be concise and practical. Return valid JSON only."
 

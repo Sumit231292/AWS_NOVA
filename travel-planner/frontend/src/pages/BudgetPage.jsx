@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { DollarSign, TrendingUp, TrendingDown, ArrowLeft } from 'lucide-react'
 import { travelAPI } from '../services/api'
+import { BudgetSkeleton } from '../components/Skeleton'
 import toast from 'react-hot-toast'
 
 const budgetLevels = ['budget', 'moderate', 'luxury']
 
 export default function BudgetPage() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({ destination: '', duration_days: 7, travelers: 2, budget_level: 'moderate' })
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -31,6 +34,9 @@ export default function BudgetPage() {
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '3rem 2rem' }}>
       <div style={{ marginBottom: '2.5rem' }}>
+        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/plan')} style={{ marginBottom: '1rem' }}>
+          <ArrowLeft size={15}/> Back to Planner
+        </button>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
           <DollarSign size={32} style={{ display: 'inline', marginRight: '0.5rem', color: 'var(--green)' }} />
           Budget Estimator
@@ -90,6 +96,8 @@ export default function BudgetPage() {
           {loading ? <><div className="spinner" /> Calculating...</> : <><DollarSign size={18} /> Estimate Budget</>}
         </button>
       </form>
+
+      {loading && !result && <BudgetSkeleton />}
 
       {result && (
         <div style={{ animation: 'fadeUp 0.5s ease' }}>
